@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Chronicle",
+    "slug": "chronicle-rpg",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "chronicle",
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-asset",
+      "expo-font"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "requireFullScreen": true
+    },
+    "android": {
+      "package": "com.chronicle.rpg"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

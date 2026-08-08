@@ -1,0 +1,12 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+.DS_Store
+*.orig.*
+*.p12
+*.mobileprovision
+*.jks
+*.env
+.metro-health-check*

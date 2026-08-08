@@ -1,0 +1,55 @@
+# Chronicle — PRD / Working Memory
+
+## Original problem statement
+Existing Expo/React Native game "Chronicle". Task: **Core Gameplay Loop
+Integration** — connect existing systems into an actual loop:
+Combat → Event → Quest Objective Progress → Quest Completion → Rewards →
+Reputation → History → NPC Memory / World Consequences.
+Audit first, implement only the missing connections, preserve architecture
+(Expo/RN, SQLite, Zustand, EventBus, WorldTransaction). Don't rebuild.
+Baseline was 20/20 tests passing — must not break it.
+
+## Architecture (unchanged, preserved)
+- `src/domain` pure types · `src/data` SQLite repos + seed · `src/systems`
+  game engine · `src/state` Zustand store (only bridge UI uses) ·
+  `src/presentation` + `app/` (expo-router screens).
+- EventBus is the single cross-system coordinator. EventEngine creates/persists
+  WorldEvents; reactions live in `eventSubscribers/`. WorldTransaction wraps
+  simulate→persist→commit. SaveManager owns load-or-seed + subscriber bootstrap.
+
+## Audit findings (this task)
+Already worked: EventBus/EventEngine, subscribers (history/npcMemory/world
+consequence/rumor/achievement), QuestGenerator, ReputationSystem.adjust,
+NPCMemorySystem, CombatEngine (pure turn resolver), WorldTransaction, SaveManager.
+Missing/dead: no objective-progress or quest-completion logic anywhere; rewards
+never granted; ReputationSystem never called; `quest_completed` never dispatched
+(its NPC-memory subscriber sat waiting) and not in HistoryLog worthy table;
+CombatEngine produced a result but no event.
+
+## Implemented (2026-06 — Core Gameplay Loop pass)
+- NEW `src/systems/QuestSystem.ts`: `advanceObjective`, `isSatisfied`,
+  `checkAndCompleteQuest`, `completeQuest` (ONE authoritative path — reward +
+  reputation + `quest_completed` event; idempotent, cannot pay twice).
+- NEW `src/systems/CombatSystem.ts`: `resolveAutoBattle` (deterministic) +
+  `victoryEvent` (maps victory → existing `bandit_leader_slain` event).
+- NEW `src/systems/eventSubscribers/questProgressSubscriber.ts`: combat-victory
+  events → advance clear_location/defeat_target objectives → check completion.
+- Edited `registerAllEventSubscribers.ts` (register new subscriber),
+  `HistoryLog.ts` (`quest_completed: "personal"`), `useWorldStore.ts`
+  (`resolveQuestBattle` action via WorldTransaction), `app/quests/index.tsx`
+  (minimal "Resolve battle" button → store action only).
+- Tests: NEW `tests/questLoop.test.ts` (10 tests). Total 30/30 passing.
+
+## Verification
+- Tests: 30/30 pass (20 existing + 10 new), 0 fail, 0 skip.
+- Typecheck: new gameplay source = 0 errors. Pre-existing app-wide
+  `ResolvedTheme`/`ScreenContainerProps` errors (~150) unrelated to this task.
+- Mobile: Metro bundles all 1137 modules OK; native launch blocked by
+  aarch64 vs x86-64 `hermesc` mismatch (environment, not source).
+
+## Backlog / next
+- P1: wire non-combat objective triggers (`talk_to_npc` off `talkTo`,
+  `deliver_item` off travel/arrival).
+- P1: fix pre-existing ResolvedTheme/ScreenContainerProps type-surface errors.
+- P2: real turn-by-turn combat screen; persist RNG seed for reload determinism;
+  persist RumorSystem/AchievementSystem.
