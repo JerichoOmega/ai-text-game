@@ -10,3 +10,9 @@ web-build/
 *.jks
 *.env
 .metro-health-check*
+.env
+.env.*
+credentials.json
+*.pem
+*.key
+.credentials
