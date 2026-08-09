@@ -70,7 +70,9 @@ test("a throwing handler does not prevent other handlers from running", async ()
 test("handlers only fire for their subscribed type, plus wildcard", async () => {
   eventBus.reset();
   const calls: string[] = [];
-  eventBus.on("ruler_died", () => calls.push("ruler_died"));
+  eventBus.on("ruler_died", () => {
+    calls.push("ruler_died");
+  });
 
   await eventBus.emit(makeEvent({ type: "monster_migration" }), {
     manager: {} as any,

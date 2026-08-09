@@ -317,3 +317,26 @@ before changing anything, per the request. Real findings and fixes:
   selector, `world.tsx`'s kingdom/settlement cards) still have a couple of
   off-scale spacing/radius values — flagged in `DESIGN_SYSTEM.md`, not
   chased to zero given the time this pass had.
+
+## Design Bible pass (UI look)
+
+Applied the uploaded **Chronicle UI Design Bible** (6 reference screens) to the
+existing app without touching gameplay logic or the systems layer:
+
+- **Main Menu (`app/index.tsx`, route `/`)** — the Bible's flagship UI-001:
+  full-bleed painted hero (`assets/images/main-menu-hero.jpg`), gold serif
+  CHRONICLE wordmark + compass medallion, tagline, and a large-button
+  launcher into the four tabs. New Adventure / Inventory are shown honestly
+  disabled. The four-tab Journey screen moved from `/` to `/journey`.
+- **Dark by default** — `useUIStore.themeMode` now defaults to `dark`; the
+  obsidian palette was deepened (`background #0A0806`, warmer leather panels)
+  to match the Bible.
+- **ChronicleCard** rebuilt to the Bible layout: category-tinted thumbnail +
+  headline/detail/time + heraldic shield (UI-002 / UI-005).
+- **Type surface fixed** — corrected the `Theme` type so `npm run typecheck`
+  now passes **0 errors** (previously ~150 pre-existing `ResolvedTheme` errors).
+
+_Verification limits_: the RN app cannot be launched here (aarch64 vs x86-64
+`hermesc`; no simulator), so this pass is verified via a clean typecheck,
+30/30 tests, and a successful Metro bundle of all 1139 modules (which resolves
+the new route and bundled hero asset) — not by on-device screenshots.

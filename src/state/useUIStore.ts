@@ -29,7 +29,7 @@ interface UIStore {
 }
 
 export const useUIStore = create<UIStore>((set, get) => ({
-  themeMode: "system",
+  themeMode: "dark",
   hapticsEnabled: true,
   setThemeMode: (mode) => set({ themeMode: mode }),
   toggleHaptics: () => set((state) => ({ hapticsEnabled: !state.hapticsEnabled })),

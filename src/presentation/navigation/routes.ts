@@ -14,7 +14,8 @@ import type { EntityId } from "@/domain/types";
  * site can't accidentally pass a raw string where an id was required.
  */
 export const routes = {
-  journey: "/" as const,
+  menu: "/" as const,
+  journey: "/journey" as const,
   character: "/character" as const,
   chronicle: "/chronicle" as const,
   world: "/world" as const,

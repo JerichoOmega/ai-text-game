@@ -62,7 +62,7 @@ export const CombatEngine = {
       const posA = combatants.find((c) => c.id === a.actorId)?.position ?? "back";
       const posB = combatants.find((c) => c.id === b.actorId)?.position ?? "back";
       const order: Record<string, number> = { front: 0, mid: 1, back: 2 };
-      return order[posA] - order[posB];
+      return (order[posA] ?? 2) - (order[posB] ?? 2);
     });
 
     let working: CombatEncounter = { ...encounter, combatants };

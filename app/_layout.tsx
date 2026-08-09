@@ -51,6 +51,7 @@ function AppContent() {
          * over whatever tab was active rather than replacing it in the
          * stack), NPC detail and quest log push normally, `settings` pushes
          * from inside the journal. */}
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="journal" options={{ headerShown: false, presentation: "modal" }} />
         <Stack.Screen name="settings" options={{ title: "Settings" }} />

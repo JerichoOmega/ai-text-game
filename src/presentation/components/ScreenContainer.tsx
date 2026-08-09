@@ -6,7 +6,7 @@ import { spacing } from "../theme/theme";
 import { LoadingState } from "./LoadingState";
 
 interface ScreenContainerProps {
-  children: ReactNode;
+  children?: ReactNode;
   /** When true, renders LoadingState instead of children. Every top-level
    * screen was independently writing `if (!world) return <LoadingState/>`
    * (or, on two screens, `return null` — a real inconsistency the polish

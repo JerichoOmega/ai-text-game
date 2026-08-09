@@ -53,3 +53,19 @@ CombatEngine produced a result but no event.
 - P1: fix pre-existing ResolvedTheme/ScreenContainerProps type-surface errors.
 - P2: real turn-by-turn combat screen; persist RNG seed for reload determinism;
   persist RumorSystem/AchievementSystem.
+
+## UI — Design Bible pass (2026-06)
+Applied uploaded Chronicle UI Design Bible (6 screens) to the presentation
+layer only; gameplay/systems untouched.
+- NEW `app/index.tsx` Main Menu launcher (route `/`, hero art
+  `assets/images/main-menu-hero.jpg`, wordmark + tagline + button launcher).
+  Journey tab moved `/` → `/journey` (`app/(tabs)/journey.tsx`);
+  `routes.menu`/`routes.journey` updated; root Stack + tabs layout updated.
+- Dark theme is now the default (`useUIStore.themeMode: "dark"`); dark palette
+  deepened toward the Bible (`background #0A0806`, warmer panels).
+- `ChronicleCard` rebuilt to Bible layout (thumbnail + shield).
+- Fixed root-cause `Theme` type → `npm run typecheck` now 0 errors
+  (was ~150 pre-existing ResolvedTheme errors); also fixed ScreenContainer
+  optional children + 2 trivial pre-existing errors (CombatEngine, eventBus test).
+- Verified: 30/30 tests, typecheck 0 errors, Metro bundles all 1139 modules.
+  Native launch still blocked by aarch64 vs x86-64 hermesc (no on-device shots).

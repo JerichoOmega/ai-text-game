@@ -49,10 +49,10 @@ export const palette = {
     goldBorder: "#C4A15E",
   },
   dark: {
-    background: "#0F0D0B", // deep charcoal / obsidian
-    surface: "#171310",
-    surfaceRaised: "#1F1A15",
-    panel: "#1B1712", // dark leather
+    background: "#0A0806", // deep obsidian / near-black (Design Bible)
+    surface: "#141009",
+    surfaceRaised: "#241B12",
+    panel: "#211913", // warm dark leather, lifted just off the background
     ink: "#EFE8D8", // warm parchment
     inkMuted: "#9C9280",
     gold: "#C9A15C", // antique gold
@@ -61,8 +61,8 @@ export const palette = {
     accent: "#4FB3C9", // the cool "active" accent — used sparingly, see file doc
     wax: "#C4544F", // muted crimson
     forest: "#6FA37D", // muted emerald
-    border: "#332B20",
-    goldBorder: "#8A7245",
+    border: "#3A3024",
+    goldBorder: "#6E5A34",
   },
 } as const;
 
@@ -70,7 +70,7 @@ export const palette = {
 // migrated to the new tokens still resolves to something sane rather than
 // crashing on `theme.brass`. New code should use `gold`/`goldMuted` directly;
 // remove these once nothing references them (grep for `.brass` to check).
-export const legacyAliases = (t: (typeof palette)["dark"]) => ({
+export const legacyAliases = (t: { gold: string; goldMuted: string }) => ({
   brass: t.gold,
   brassMuted: t.goldMuted,
 });
@@ -146,9 +146,26 @@ export function scaledFontSize(base: number): number {
   return Math.round(base * scale);
 }
 
-export function getTheme(scheme: "light" | "dark") {
+export function getTheme(scheme: "light" | "dark"): Theme {
   const base = palette[scheme];
   return { ...base, ...legacyAliases(base) };
 }
 
-export type Theme = ReturnType<typeof getTheme>;
+export interface Theme {
+  background: string;
+  surface: string;
+  surfaceRaised: string;
+  panel: string;
+  ink: string;
+  inkMuted: string;
+  gold: string;
+  goldMuted: string;
+  bronze: string;
+  accent: string;
+  wax: string;
+  forest: string;
+  border: string;
+  goldBorder: string;
+  brass: string;
+  brassMuted: string;
+}

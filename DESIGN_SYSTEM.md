@@ -7,7 +7,17 @@ pass.
 
 ## Navigation (locked)
 
-Four persistent bottom tabs: **Journey, Character, Chronicle, World**.
+**Main Menu launcher (`app/index.tsx`, route `/`)** — the Design Bible's
+flagship screen (UI-001): full-bleed painted hero art
+(`assets/images/main-menu-hero.jpg`), the gold serif CHRONICLE wordmark +
+compass medallion, the "Realms remember. Legends endure." tagline, and a
+vertical launcher of large gold-bordered buttons. It is the app's entry
+screen; each button pushes into the four-tab experience. Buttons only route
+to features that exist — New Adventure / Inventory are shown honestly
+disabled ("Coming soon"), not faked.
+
+Four persistent bottom tabs: **Journey, Character, Chronicle, World** (the
+Journey tab now lives at `/journey`, since `/` is the Main Menu).
 Everything else — Inventory, Companions, Camp, Codex, Bestiary, Settings,
 Achievements, Support — lives in the **Adventure Journal** (`app/journal.tsx`),
 a modal reachable from a single compass-icon button (`JournalTriggerButton`)
@@ -18,6 +28,10 @@ No manual save button anywhere. The game autosaves after every time
 advance (`useWorldStore.advanceTime`); `saveNow()` exists as an internal
 capability the journal reads a status from, not something the player
 triggers.
+
+The app defaults to the **dark (obsidian) theme** — the Design Bible is a
+dark-only reference; light mode still exists and is selectable but is no
+longer the launch default.
 
 ## Color palette
 
