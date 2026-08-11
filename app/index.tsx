@@ -85,7 +85,7 @@ export default function MainMenuScreen() {
     { key: "continue", icon: "compass", title: "Continue", subtitle: savedLabel, route: routes.journey, highlight: true },
     { key: "new", icon: "sparkles", title: "New Adventure", subtitle: "Begin a fresh saga", route: routes.newAdventure },
     { key: "chronicle", icon: "book", title: "Chronicle", subtitle: "World news & history", route: routes.chronicle },
-    { key: "characters", icon: "person", title: "Characters", subtitle: "Your hero & companions", route: routes.character },
+    { key: "characters", icon: "person", title: "Characters", subtitle: "Your hero & progress", route: routes.character },
     { key: "quests", icon: "reader", title: "Quest Log", subtitle: "Active quests & objectives", route: routes.quests },
     { key: "inventory", icon: "bag", title: "Inventory", subtitle: "Coming soon", disabled: true },
     { key: "world", icon: "globe", title: "World", subtitle: "Map, kingdoms & factions", route: routes.world },

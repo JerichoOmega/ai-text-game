@@ -1,5 +1,15 @@
 # Chronicle — PRD / Working Memory
 
+## MVP scope decision (2026-06): Companions DEFERRED (post-launch)
+Deliberate scope reduction for a finished MVP. No companion system, tab,
+route, screen, model, or persistence — and no dead companion UI. Removed the
+disabled "Companions" journal MenuRow and the "& companions" main-menu
+subtitle wording. PRESERVED as inert future extension points:
+`companion_joined`/`companion_left` event types + HistoryLog entries (never
+dispatched). Four tabs (Journey/Character/Chronicle/World) and the Adventure
+Journal are unchanged. Freed scope goes to NPC interaction / dialogue.
+
+
 ## Original problem statement
 Existing Expo/React Native game "Chronicle". Task: **Core Gameplay Loop
 Integration** — connect existing systems into an actual loop:

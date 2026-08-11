@@ -212,8 +212,10 @@ on `PlayerCharacter`, for the new Character tab) changed.
   sub-tabs; only Kingdoms and Settlements have a domain model behind them
   today, so that's all the World tab shows, with an explicit "coming soon"
   note rather than a decorative fake map. Same treatment for
-  Inventory/Companions/Crafting/Codex in the More tab — real `MenuRow`
+  Inventory/Crafting/Codex in the More tab — real `MenuRow`
   entries, disabled, not silently omitted or faked as working.
+  (Companions were deferred from the MVP — see STATUS.md — so that row was
+  removed rather than left as a disabled placeholder.)
 - **Not done**: the mockup's connecting-rail Timeline visual (icon nodes
   linked by a vertical line) — the Chronicle tab has real Timeline/News
   views over live data, just not that specific rendering treatment yet.
@@ -240,7 +242,7 @@ World), not five. "More" was removed — its contents moved into a new
 **Adventure Journal** overlay (`app/journal.tsx`, a modal route), reachable
 from a persistent compass-icon button (`JournalTriggerButton`) in every
 tab's header. This matches "no duplicated navigation": there is exactly one
-way to reach Settings/Inventory/Companions/etc., not a tab AND a menu that
+way to reach Settings/Inventory/etc., not a tab AND a menu that
 both go somewhere similar.
 
 **No manual save button** — removed per the design mandate ("the game

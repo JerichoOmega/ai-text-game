@@ -32,3 +32,17 @@ export interface DialogueNode {
   lines: DialogueLine[];
   responseOptionIds: EntityId[];
 }
+
+/**
+ * A branch the player can pick in a conversation. Deterministic and
+ * generated from live world state (see DialogueSystem.getResponses) — not
+ * an open chatbox. `topic` is what the DialogueSystem/screen acts on;
+ * `label` is the player's spoken line.
+ */
+export type DialogueTopic = "news" | "rumors" | "quest" | "shop" | "leave";
+
+export interface DialogueResponse {
+  id: EntityId;
+  topic: DialogueTopic;
+  label: string;
+}

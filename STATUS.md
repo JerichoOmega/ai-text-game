@@ -1,5 +1,18 @@
 # Production Hardening — Status
 
+## MVP scope: Companions deferred (post-launch)
+
+**Companions are deferred from the initial release** — a deliberate scope
+reduction to get Chronicle to a finished, releasable MVP sooner. This is
+**not** a permanent cancellation; companions are a planned future/post-launch
+system. There is intentionally no companion gameplay system, no Companions
+navigation destination, no companion screen/route/model/persistence, and no
+dead companion UI. The `companion_joined`/`companion_left` world-event types
+(and their HistoryLog entries) are preserved as inert future extension points
+only — nothing dispatches them today. The MVP centers on the player's personal
+journey and on richer NPC interaction (the portrait-dominant dialogue screen).
+
+
 Written against the 14-phase hardening prompt. Graded honestly: **Done**
 means implemented and internally consistent (verified by manual type-surface
 review, not by running the toolchain — no network in this environment, see

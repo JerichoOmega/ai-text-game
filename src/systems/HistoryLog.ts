@@ -28,6 +28,7 @@ const HISTORY_WORTHY: Partial<Record<WorldEventType, HistoryCategory>> = {
   merchant_bankrupt: "economic",
   player_promoted: "personal",
   player_arrested: "personal",
+  // Preserved for a deferred, post-MVP companions feature (never emitted today).
   companion_joined: "personal",
   companion_left: "personal",
   quest_completed: "personal",

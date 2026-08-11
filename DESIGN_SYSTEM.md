@@ -18,10 +18,18 @@ disabled ("Coming soon"), not faked.
 
 Four persistent bottom tabs: **Journey, Character, Chronicle, World** (the
 Journey tab now lives at `/journey`, since `/` is the Main Menu).
-Everything else — Inventory, Companions, Camp, Codex, Bestiary, Settings,
+Everything else — Inventory, Camp, Codex, Bestiary, Settings,
 Achievements, Support — lives in the **Adventure Journal** (`app/journal.tsx`),
 a modal reachable from a single compass-icon button (`JournalTriggerButton`)
 present on every tab. This is the one and only entry point to those
+
+> **Companions are deferred from the initial release** — a deliberate MVP
+> scope decision to reach a finished, releasable game sooner (not a
+> cancellation; see STATUS.md "MVP scope"). There is no Companions tab, no
+> Companions menu entry, and no companion gameplay system. The MVP centers
+> on the player's personal journey and NPC interaction. The
+> `companion_joined`/`companion_left` event vocabulary is intentionally kept
+> as an inert future extension point.
 features — do not add a second path to the same screen from somewhere else.
 
 No manual save button anywhere. The game autosaves after every time
@@ -305,7 +313,7 @@ sandbox has no device to verify feel on), and game controller haptics.
    need doesn't exist as a token, that's a signal to add it to the scale
    (and use it elsewhere too), not to hardcode a one-off number.
 3. If the screen needs data that doesn't have a domain model yet (like
-   Companions or Inventory today), build the honest disabled/"coming soon"
+   Inventory today), build the honest disabled/"coming soon"
    state, not a decorative fake. See `MenuRow` usage in `journal.tsx` for
    the pattern.
 4. Answer, within the first screenful: *Where am I? What matters right

@@ -30,6 +30,9 @@ export type WorldEventType =
   | "weather_changed"
   | "season_changed"
   | "item_crafted"
+  // Companions are DEFERRED post-MVP (see STATUS.md). These event types are
+  // preserved as inert future extension points — never dispatched today —
+  // so adding companions later needs no change to the event vocabulary.
   | "companion_joined"
   | "companion_left"
   | "crime_witnessed"

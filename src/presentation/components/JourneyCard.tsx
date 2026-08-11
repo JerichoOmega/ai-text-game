@@ -15,10 +15,10 @@ interface JourneyCardProps {
 
 /**
  * The mockup's Current Journey card also shows quest artwork, travel
- * distance, companion icons, and a difficulty indicator. Only the
- * objective checklist is backed by real data (`Quest.objectives`) — the
- * rest don't have systems behind them (no travel/companion/difficulty
- * model exists yet), so they're omitted rather than shown as decoration.
+ * distance, and a difficulty indicator. Only the objective checklist is
+ * backed by real data (`Quest.objectives`) — the rest don't have systems
+ * behind them (no travel/difficulty model exists), so they're omitted
+ * rather than shown as decoration.
  */
 export function JourneyCard({ title, detail, objectives, onPress }: JourneyCardProps) {
   const theme = useTheme();

@@ -1,4 +1,4 @@
-import type { DialogueCondition, DialogueLine, NPC, WorldState } from "@/domain/types";
+import type { DialogueCondition, DialogueLine, DialogueResponse, DialogueTopic, NPC, Quest, WorldState } from "@/domain/types";
 import { describeDaysAgo } from "@/domain/types";
 import { NPCMemorySystem } from "./NPCMemorySystem";
 
@@ -78,6 +78,19 @@ function fillTemplate(template: string, npc: NPC, world: WorldState): string {
   return template.replace("{timeAgo}", timeAgo);
 }
 
+const MERCHANT_ROLES = new Set(["merchant", "innkeeper"]);
+
+function lowerFirst(text: string): string {
+  return text.length > 0 ? text[0]!.toLowerCase() + text.slice(1) : text;
+}
+
+/** The active quest this NPC personally handed out, if any. */
+function questFromGiver(npc: NPC, world: WorldState): Quest | undefined {
+  return Object.values(world.quests).find(
+    (q) => q.giverNpcId === npc.id && (q.status === "available" || q.status === "active")
+  );
+}
+
 export const DialogueSystem = {
   /** Returns the single best-matching, fully-resolved line of dialogue for an NPC right now. */
   getGreeting(npc: NPC, world: WorldState): string {
@@ -85,5 +98,61 @@ export const DialogueSystem = {
     const best = eligible.sort((a, b) => b.priority - a.priority)[0];
     if (!best) return "...";
     return fillTemplate(best.template, npc, world);
+  },
+
+  /**
+   * The player's available responses right now, derived deterministically
+   * from live world state (is this a merchant? did they give a quest?).
+   * Always ends with a way to leave. Not a free-text chat — a fixed set of
+   * branches the screen can render as buttons.
+   */
+  getResponses(npc: NPC, world: WorldState): DialogueResponse[] {
+    const responses: DialogueResponse[] = [];
+    if (MERCHANT_ROLES.has(npc.role)) {
+      responses.push({ id: "resp_shop", topic: "shop", label: "Let me see what you have for sale." });
+    }
+    responses.push({ id: "resp_news", topic: "news", label: "What's new around here?" });
+    responses.push({ id: "resp_rumors", topic: "rumors", label: "Any rumors or news?" });
+    const quest = questFromGiver(npc, world);
+    if (quest) {
+      responses.push({ id: "resp_quest", topic: "quest", label: `About "${quest.title}"...` });
+    }
+    responses.push({ id: "resp_leave", topic: "leave", label: "I should get going." });
+    return responses;
+  },
+
+  /**
+   * The NPC's deterministic reply to a chosen topic, resolved from live
+   * settlement/quest/memory state. Purely narrative — selecting a topic
+   * never mutates the world here (the shop/leave topics are handled by the
+   * screen as navigation).
+   */
+  getReply(npc: NPC, world: WorldState, topic: DialogueTopic): string {
+    switch (topic) {
+      case "news": {
+        const settlement = world.settlements[npc.settlementId];
+        if (!settlement) return "Hard to say. I don't get out much these days.";
+        if (settlement.destroyed) return "There's nothing left here but ash and memory.";
+        if (settlement.roadSafety < 40) return "The roads have been dangerous of late. Keep your blade close.";
+        if (settlement.prosperity >= 70) return `${settlement.name} is thriving. Coin flows and spirits are high.`;
+        return `${settlement.name} carries on, same as ever. Quiet enough, for now.`;
+      }
+      case "rumors": {
+        const memory = NPCMemorySystem.getProminentMemories(npc, 1)[0];
+        if (memory) return `Folk still speak of it — ${lowerFirst(memory.summary)}`;
+        return "Nothing worth repeating just now. Ask me again another day.";
+      }
+      case "quest": {
+        const quest = questFromGiver(npc, world);
+        if (!quest) return "I've nothing to ask of you at the moment.";
+        return `${quest.contextSummary || quest.title}. See it done and you'll be well repaid.`;
+      }
+      case "shop":
+        return "Right this way. Everything's fairly priced, I promise you.";
+      case "leave":
+        return "Safe travels, then. Mind the roads.";
+      default:
+        return this.getGreeting(npc, world);
+    }
   },
 };

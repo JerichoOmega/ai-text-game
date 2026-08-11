@@ -94,7 +94,6 @@ export default function JournalScreen() {
         <SectionHeader label="Adventure" />
         <MenuRow icon="reader" title="Quest Log" subtitle="Active quests & objectives" onPress={() => { router.back(); router.push(routes.quests); }} />
         <MenuRow icon="bag" title="Inventory" subtitle="Coming soon" onPress={() => {}} disabled />
-        <MenuRow icon="people" title="Companions" subtitle="Coming soon" onPress={() => {}} disabled />
         <MenuRow icon="flame" title="Camp" subtitle="Coming soon" onPress={() => {}} disabled />
 
         <View style={styles.sectionGap} />
