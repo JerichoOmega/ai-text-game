@@ -28,6 +28,7 @@ interface WorldStore {
   lastError: string | null;
 
   initialize: (playerNameIfNew: string) => Promise<void>;
+  startNewAdventure: (name: string) => Promise<void>;
   advanceTime: (days: number) => Promise<void>;
   resolveQuestBattle: (questId: string) => Promise<void>;
   talkTo: (npcId: string) => void;
@@ -56,6 +57,22 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     } catch (err) {
       Logger.error("useWorldStore", "initialize failed", err);
       set({ loading: false, lastError: "Failed to load your save." });
+    }
+  },
+
+  /**
+   * Starts a fresh saga under a chosen hero name, discarding any prior
+   * save (see SaveManager.createNewWorld). Resets the in-memory story log
+   * so the new game doesn't inherit the previous one's messages.
+   */
+  startNewAdventure: async (name: string) => {
+    set({ loading: true, lastError: null });
+    try {
+      const manager = await SaveManager.createNewWorld(name.trim() || "Wanderer");
+      set({ manager, world: manager.getWorld(), loading: false, lastSavedAt: new Date(), storyLog: [] });
+    } catch (err) {
+      Logger.error("useWorldStore", "startNewAdventure failed", err);
+      set({ loading: false, lastError: "Failed to start a new adventure." });
     }
   },
 

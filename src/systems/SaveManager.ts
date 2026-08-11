@@ -1,5 +1,6 @@
 import type { WorldState } from "@/domain/types";
 import { worldRepository } from "@/data/repositories/worldRepository";
+import { resetDb } from "@/data/db";
 import { buildSeedWorld } from "@/data/seed/seedWorld";
 import { WorldStateManager } from "./WorldStateManager";
 import { QuestGenerator } from "./QuestGenerator";
@@ -34,6 +35,30 @@ export const SaveManager = {
 
   async save(world: WorldState): Promise<void> {
     await worldRepository.saveAll(world);
+  },
+
+  /**
+   * Discards any existing save and seeds a brand-new world under the given
+   * hero name — the "New Adventure" path. Clears every table (including the
+   * append-only events/history logs) via resetDb so the fresh saga starts
+   * with a clean chronicle, then seeds and persists exactly like a first
+   * launch. Uses the same repositories/seed as loadOrCreate — no second
+   * persistence path.
+   */
+  async createNewWorld(playerName: string): Promise<WorldStateManager> {
+    registerAllEventSubscribers();
+    await resetDb();
+
+    const fresh = buildSeedWorld(playerName);
+    const manager = new WorldStateManager(fresh);
+
+    const initialQuests = QuestGenerator.generateAvailableQuests(manager, fresh.currentDate, 5);
+    for (const quest of initialQuests) {
+      manager.setQuest(quest);
+    }
+
+    await worldRepository.saveAll(manager.getWorld());
+    return manager;
   },
 
   async hasExistingSave(): Promise<boolean> {

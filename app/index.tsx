@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, Pressable, ImageBackground, ScrollView, StyleSheet, Animated } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, Text, Pressable, Image, ScrollView, StyleSheet, Animated, Easing } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,6 +7,7 @@ import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
 import { fontFamily, scaledFontSize, typeScale, radii, spacing, iconSize } from "@/presentation/theme/theme";
 import { usePressScale } from "@/presentation/theme/usePressScale";
+import { useReduceMotion } from "@/presentation/theme/useReduceMotion";
 import { HapticManager } from "@/presentation/haptics/HapticManager";
 import { routes } from "@/presentation/navigation/routes";
 
@@ -23,19 +24,58 @@ interface MenuItem {
 }
 
 /**
- * The Design Bible's flagship screen (UI-001): a full-bleed painted hero,
- * the gold serif CHRONICLE wordmark + compass medallion, tagline, and a
- * vertical launcher of large gold-bordered buttons. It owns "/" — every
- * button pushes into the four-tab experience (which now lives at
- * /journey, /character, ...). Buttons only route to features that actually
- * exist; the two the app hasn't built yet are shown, honestly disabled,
- * rather than faked (matching the project's stated honesty rule).
+ * The Design Bible's flagship screen (UI-001): a full-bleed painted hero
+ * with a slow parallax drift and a soft torch-glow (both disabled under
+ * Reduce Motion), the gold serif CHRONICLE wordmark + compass medallion,
+ * tagline, and a vertical launcher of large gold-bordered buttons. It owns
+ * "/" — every button pushes into the four-tab experience (which now lives
+ * at /journey, /character, ...). Buttons only route to features that exist;
+ * Inventory is shown honestly disabled rather than faked.
  */
 export default function MainMenuScreen() {
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReduceMotion();
   const lastSavedAt = useWorldStore((s) => s.lastSavedAt);
+
+  const drift = useRef(new Animated.Value(0)).current;
+  const glow = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      drift.setValue(0.5);
+      glow.setValue(0.5);
+      return;
+    }
+    const driftLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(drift, { toValue: 1, duration: 9000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(drift, { toValue: 0, duration: 9000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    );
+    const glowLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glow, { toValue: 1, duration: 2600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(glow, { toValue: 0, duration: 3200, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    );
+    driftLoop.start();
+    glowLoop.start();
+    return () => {
+      driftLoop.stop();
+      glowLoop.stop();
+    };
+  }, [reduceMotion, drift, glow]);
+
+  const heroTransform = {
+    transform: [
+      { scale: drift.interpolate({ inputRange: [0, 1], outputRange: [1.07, 1.11] }) },
+      { translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [-7, 7] }) },
+      { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [5, -5] }) },
+    ],
+  };
+  const glowStyle = { opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.16, 0.44] }) };
 
   const savedLabel = lastSavedAt
     ? `Last saved ${lastSavedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
@@ -43,7 +83,7 @@ export default function MainMenuScreen() {
 
   const items: MenuItem[] = [
     { key: "continue", icon: "compass", title: "Continue", subtitle: savedLabel, route: routes.journey, highlight: true },
-    { key: "new", icon: "sparkles", title: "New Adventure", subtitle: "Coming soon", disabled: true },
+    { key: "new", icon: "sparkles", title: "New Adventure", subtitle: "Begin a fresh saga", route: routes.newAdventure },
     { key: "chronicle", icon: "book", title: "Chronicle", subtitle: "World news & history", route: routes.chronicle },
     { key: "characters", icon: "person", title: "Characters", subtitle: "Your hero & companions", route: routes.character },
     { key: "quests", icon: "reader", title: "Quest Log", subtitle: "Active quests & objectives", route: routes.quests },
@@ -52,7 +92,10 @@ export default function MainMenuScreen() {
   ];
 
   return (
-    <ImageBackground source={HERO} style={styles.bg} resizeMode="cover">
+    <View style={styles.root}>
+      <Animated.Image source={HERO} style={[styles.hero, heroTransform]} resizeMode="cover" />
+      {/* Warm torch-glow near the horizon/castle, pulsing softly. */}
+      <Animated.View style={[styles.glow, glowStyle, { backgroundColor: theme.gold }]} pointerEvents="none" />
       {/* Top and bottom scrims so the wordmark and buttons stay legible over the art. */}
       <View style={[styles.scrim, styles.scrimTop, { backgroundColor: theme.background }]} pointerEvents="none" />
       <View style={[styles.scrim, styles.scrimBottom, { backgroundColor: theme.background }]} pointerEvents="none" />
@@ -97,7 +140,7 @@ export default function MainMenuScreen() {
           ))}
         </View>
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -175,9 +218,18 @@ function MenuButton({ item, theme, onPress }: { item: MenuItem; theme: ReturnTyp
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1 },
-  scrim: { position: "absolute", left: 0, right: 0, height: "34%" },
-  scrimTop: { top: 0, opacity: 0.6 },
+  root: { flex: 1, overflow: "hidden" },
+  hero: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
+  glow: {
+    position: "absolute",
+    top: "22%",
+    right: "18%",
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+  },
+  scrim: { position: "absolute", left: 0, right: 0 },
+  scrimTop: { top: 0, height: "34%", opacity: 0.6 },
   scrimBottom: { bottom: 0, height: "48%", opacity: 0.92 },
   settingsWrap: { position: "absolute", right: spacing.lg, zIndex: 10 },
   settingsButton: {

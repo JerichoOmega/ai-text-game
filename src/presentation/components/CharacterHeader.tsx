@@ -1,11 +1,13 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import { useTheme } from "../theme/useTheme";
 import { fontFamily, scaledFontSize, typeScale } from "../theme/theme";
 import { StatBar } from "./StatBar";
 import { InlineChip } from "./InlineChip";
 import type { Ionicons } from "@expo/vector-icons";
 import { capitalize } from "@/utils/format";
+
+const HERO_PORTRAIT = require("../../../assets/images/hero-portrait.jpg");
 
 interface CharacterHeaderProps {
   name: string;
@@ -19,12 +21,10 @@ interface CharacterHeaderProps {
 }
 
 /**
- * No portrait art asset exists (the mockup uses a painted character
- * illustration) — this uses a lettered roundel instead, styled with the
- * same gold-border language, rather than shipping a placeholder image or a
- * generic silhouette icon that would look unfinished. Swap in real art by
- * replacing just the `<View style={styles.portraitPlaceholder}>` block;
- * everything else (layout, bars, chips) stays the same.
+ * Painted hero portrait art (Design Bible Character screen). The lettered
+ * initial remains as an accessibility label and a graceful fallback if the
+ * image ever fails to load. Swap the portrait source to a per-class or
+ * per-character asset later; layout is unchanged.
  */
 export function CharacterHeader({ name, level, classId, hp, maxHp, stamina, maxStamina, chips }: CharacterHeaderProps) {
   const theme = useTheme();
@@ -33,8 +33,15 @@ export function CharacterHeader({ name, level, classId, hp, maxHp, stamina, maxS
   return (
     <View>
       <View style={styles.topRow}>
-        <View style={[styles.portraitPlaceholder, { borderColor: theme.goldBorder, backgroundColor: theme.surfaceRaised }]}>
-          <Text style={[styles.portraitInitial, { color: theme.gold, fontFamily: fontFamily.displayBold }]}>{initial}</Text>
+        <View
+          style={[styles.portraitFrame, { borderColor: theme.goldBorder, backgroundColor: theme.surfaceRaised }]}
+          accessible
+          accessibilityLabel={`Portrait of ${name}`}
+        >
+          <Text style={[styles.portraitInitial, { color: theme.gold, fontFamily: fontFamily.displayBold }]} accessibilityElementsHidden importantForAccessibility="no">
+            {initial}
+          </Text>
+          <Image source={HERO_PORTRAIT} style={styles.portraitImage} resizeMode="cover" />
         </View>
         <View style={styles.nameBlock}>
           <Text
@@ -67,14 +74,16 @@ export function CharacterHeader({ name, level, classId, hp, maxHp, stamina, maxS
 
 const styles = StyleSheet.create({
   topRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
-  portraitPlaceholder: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  portraitFrame: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
+  portraitImage: { position: "absolute", width: "100%", height: "100%" },
   portraitInitial: { fontSize: 24, fontWeight: "700" },
   nameBlock: { flex: 1 },
   name: { fontWeight: "700" },

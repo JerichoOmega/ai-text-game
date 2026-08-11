@@ -54,7 +54,21 @@ CombatEngine produced a result but no event.
 - P2: real turn-by-turn combat screen; persist RNG seed for reload determinism;
   persist RumorSystem/AchievementSystem.
 
-## UI — Design Bible pass (2026-06)
+## UI — Design Bible pass 2 (2026-06)
+Implemented the four follow-up items, presentation-layer only:
+- **World Map (UI-003)**: `app/(tabs)/world.tsx` rebuilt with Map/Kingdoms/
+  Factions/Locations sub-tabs. Map view = painted `assets/images/world-map.jpg`
+  with tappable settlement markers (faction-colored, deterministic layout) +
+  a detail panel; new Factions view lists power/seat/standing.
+- **New Adventure**: `app/new-adventure.tsx` (name entry + destructive-overwrite
+  warning) → `useWorldStore.startNewAdventure` → `SaveManager.createNewWorld`
+  (resetDb + fresh seed). Main-menu button enabled + routed (`routes.newAdventure`).
+- **Menu Ambience**: main-menu hero now has a slow looping parallax drift +
+  pulsing torch-glow (Animated, native driver), both disabled under Reduce Motion.
+- **Character Portrait**: `CharacterHeader` uses painted `hero-portrait.jpg`
+  (lettered initial kept as a11y label + fallback).
+- Verified: typecheck 0 errors, 30/30 tests, Metro bundles 1142 modules.
+  Native launch still blocked by aarch64 vs x86-64 hermesc.
 Applied uploaded Chronicle UI Design Bible (6 screens) to the presentation
 layer only; gameplay/systems untouched.
 - NEW `app/index.tsx` Main Menu launcher (route `/`, hero art

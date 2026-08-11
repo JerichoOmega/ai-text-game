@@ -15,6 +15,7 @@ import type { EntityId } from "@/domain/types";
  */
 export const routes = {
   menu: "/" as const,
+  newAdventure: "/new-adventure" as const,
   journey: "/journey" as const,
   character: "/character" as const,
   chronicle: "/chronicle" as const,
