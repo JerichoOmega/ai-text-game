@@ -1,6 +1,7 @@
 import type { ImageSourcePropType } from "react-native";
 import type { NpcRole } from "@/domain/types";
 import { npcPortrait } from "./npcPortrait";
+import { isRecurringNpc, recurringExpressionAsset } from "./npcAssets";
 
 /**
  * shopkeeperId -> official portrait asset (the individual character
@@ -24,11 +25,23 @@ const SHOPKEEPER_PORTRAITS: Record<string, ImageSourcePropType> = {
 };
 
 /**
- * Resolves the portrait for an NPC: an official shopkeeper's authored art
- * when the NPC carries a known shopkeeperId, otherwise the generic
- * role-based placeholder.
+ * Resolves the portrait for an NPC, distinguishing canonical KEY NPCs from
+ * ordinary generated NPCs:
+ *   1. characterId  -> one of the 12 canonical recurring NPCs (expression art)
+ *   2. shopkeeperId -> a canonical recurring shopkeeper's portrait
+ *   3. otherwise     -> a generic role-based placeholder for generated NPCs
+ * Canonical art is never randomly replaced, and a generated NPC can never
+ * resolve to a canonical character's portrait.
  */
-export function portraitForNpc(npc: { role: NpcRole; shopkeeperId?: string }): ImageSourcePropType {
+export function portraitForNpc(
+  npc: { role: NpcRole; shopkeeperId?: string; characterId?: string },
+  emotion = "neutral"
+): ImageSourcePropType {
+  const characterId = npc.characterId;
+  if (isRecurringNpc(characterId)) {
+    const asset = recurringExpressionAsset(characterId, emotion);
+    if (asset) return asset;
+  }
   if (npc.shopkeeperId && SHOPKEEPER_PORTRAITS[npc.shopkeeperId]) {
     return SHOPKEEPER_PORTRAITS[npc.shopkeeperId]!;
   }

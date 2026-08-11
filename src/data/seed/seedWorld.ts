@@ -10,6 +10,7 @@ import type {
 } from "@/domain/types";
 import { createId } from "@/utils/id";
 import { assignShopkeepers } from "@/data/shopkeepers";
+import { assignRecurringNpcs } from "@/data/npcRegistry";
 
 const START_DATE: GameDate = { year: 212, season: "spring", day: 1 };
 
@@ -144,6 +145,9 @@ export function buildSeedWorld(playerName: string, seed: number = Math.floor(Mat
   // Deterministically place this run's recurring shopkeepers onto the
   // merchant/innkeeper slots, keyed off the world seed.
   const npcsWithShopkeepers = assignShopkeepers(npcsById, settlementsById, seed);
+  // Then place this run's subset of canonical KEY NPCs onto ordinary NPC
+  // slots (never merchant/innkeeper/shopkeeper). Separate pool from shopkeepers.
+  const npcsFinal = assignRecurringNpcs(npcsWithShopkeepers, seed);
 
   const player: PlayerCharacter = {
     id: createId("player"),

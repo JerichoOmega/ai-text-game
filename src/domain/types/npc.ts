@@ -74,6 +74,13 @@ export interface NPC {
    * Absent for ordinary generated NPCs.
    */
   shopkeeperId?: EntityId;
+  /**
+   * If set, this NPC is one of the 12 canonical recurring NPC identities
+   * (see src/data/npcRegistry.ts) — a SEPARATE pool from shopkeepers.
+   * Assigned deterministically per run; drives the canonical portrait +
+   * expression art. Absent for ordinary generated NPCs.
+   */
+  characterId?: EntityId;
 }
 
 export interface NpcScheduleSlot {
