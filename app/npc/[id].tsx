@@ -1,17 +1,21 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
-import { scaledFontSize, typeScale, fontFamily, eyebrowStyle } from "@/presentation/theme/theme";
+import { scaledFontSize, typeScale, fontFamily, eyebrowStyle, spacing } from "@/presentation/theme/theme";
 import { ActionButton } from "@/presentation/components/ActionButton";
 import { NPCMemorySystem } from "@/systems/NPCMemorySystem";
 import { describeDaysAgo } from "@/domain/types";
+import { routes } from "@/presentation/navigation/routes";
+
+const MERCHANT_ROLES = new Set(["merchant", "innkeeper"]);
 
 export default function NpcScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
+  const router = useRouter();
   const { world, manager, talkTo } = useWorldStore();
 
   const npc = world && id ? world.npcs[id] : undefined;
@@ -36,6 +40,16 @@ export default function NpcScreen() {
       <Text style={[styles.role, { color: theme.inkMuted }]}>{npc.role}</Text>
 
       <ActionButton label="Talk" onPress={() => talkTo(npc.id)} />
+      {MERCHANT_ROLES.has(npc.role) && (
+        <View style={styles.shopButton}>
+          <ActionButton
+            label="Browse wares"
+            variant="secondary"
+            onPress={() => router.push(routes.shop(npc.id))}
+            accessibilityHint={`Trade with ${npc.name}`}
+          />
+        </View>
+      )}
 
       <ScrollView style={styles.memorySection}>
         <Text style={[eyebrowStyle, { color: theme.inkMuted, marginBottom: 8 }]}>What They Remember</Text>
@@ -60,6 +74,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   name: { fontWeight: "800" },
   role: { textTransform: "capitalize", marginBottom: 16 },
+  shopButton: { marginTop: spacing.sm },
   memorySection: { flex: 1, marginTop: 20 },
   sectionLabel: { fontSize: 13, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 },
   memoryRow: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 10 },

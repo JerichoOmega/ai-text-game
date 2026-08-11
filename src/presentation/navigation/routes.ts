@@ -23,5 +23,6 @@ export const routes = {
   journal: "/journal" as const,
   settings: "/settings" as const,
   quests: "/quests" as const,
+  shop: (npcId: EntityId) => `/shop?npcId=${npcId}` as const,
   npc: (id: EntityId) => `/npc/${id}` as const,
 };

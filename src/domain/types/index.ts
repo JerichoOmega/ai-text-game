@@ -4,6 +4,7 @@ export * from "./faction";
 export * from "./npc";
 export * from "./event";
 export * from "./quest";
+export * from "./shop";
 export * from "./dialogue";
 export * from "./combat";
 export * from "./reputation";

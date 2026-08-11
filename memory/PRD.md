@@ -54,6 +54,23 @@ CombatEngine produced a result but no event.
 - P2: real turn-by-turn combat screen; persist RNG seed for reload determinism;
   persist RumorSystem/AchievementSystem.
 
+## Shop / Merchant screen (2026-06)
+Design Bible shop mockup implemented as the smallest abstraction — no new
+economy/inventory subsystem.
+- Audit: no item/inventory/shop system existed (only `inventoryItemIds: string[]`
+  + `gold`); dialogue = `DialogueSystem.getGreeting`; assets = require().
+- NEW `src/domain/types/shop.ts` (`ShopItem`), `src/data/shopCatalog.ts`
+  (deterministic 5-item stock), `app/shop.tsx` (portrait + dialogue + item
+  rows + Buy/Cancel detail sheet), reusable `merchant-portrait.jpg`.
+- `useWorldStore.buyItem(itemId)` reuses `gold` + `inventoryItemIds` via
+  runTransactionalWorldUpdate + SaveManager (persisted, idempotent-safe,
+  affordability-guarded). Reuses DialogueSystem for the shopkeeper line.
+- Entry: merchant/innkeeper NPC detail → "Browse wares" → `routes.shop(npcId)`
+  (pushed Stack screen). Four-tab nav untouched.
+- Verified: typecheck 0 errors, 30/30 tests, Metro bundles 1146 modules,
+  sweep shows no duplicate shop/item systems. Item ROW icons use Ionicons
+  (no per-item art pipeline). Not verified on-device (aarch64 vs x86-64 hermesc).
+
 ## UI — Design Bible pass 2 (2026-06)
 Implemented the four follow-up items, presentation-layer only:
 - **World Map (UI-003)**: `app/(tabs)/world.tsx` rebuilt with Map/Kingdoms/

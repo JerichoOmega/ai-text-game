@@ -9,6 +9,7 @@ import { DialogueSystem } from "@/systems/DialogueSystem";
 import { EventEngine } from "@/systems/EventEngine";
 import { CombatSystem } from "@/systems/CombatSystem";
 import { COMBAT_OBJECTIVE_TYPES } from "@/systems/QuestSystem";
+import { findShopItem } from "@/data/shopCatalog";
 import { Logger } from "@/utils/logger";
 
 interface WorldStore {
@@ -31,6 +32,7 @@ interface WorldStore {
   startNewAdventure: (name: string) => Promise<void>;
   advanceTime: (days: number) => Promise<void>;
   resolveQuestBattle: (questId: string) => Promise<void>;
+  buyItem: (itemId: string) => Promise<boolean>;
   talkTo: (npcId: string) => void;
   pushLog: (line: string) => void;
   saveNow: () => Promise<void>;
@@ -185,6 +187,59 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
       lastError: null,
     }));
   },
+
+  /**
+   * Buys a deterministic shop-catalog item: deducts its price from the
+   * existing `gold` currency and appends its id to the existing
+   * `inventoryItemIds` (no new economy/inventory system). Runs inside
+   * runTransactionalWorldUpdate so the purchase persists before it becomes
+   * authoritative. Returns true on success, false if unaffordable or the
+   * save failed. Deterministic — no RNG, no AI.
+   */
+  buyItem: async (itemId: string) => {
+    const { manager } = get();
+    if (!manager) return false;
+
+    const item = findShopItem(itemId);
+    if (!item) return false;
+
+    if (manager.getWorld().player.gold < item.price) {
+      set({ lastError: `You can't afford ${item.name}.` });
+      return false;
+    }
+
+    const outcome = await runTransactionalWorldUpdate(
+      manager,
+      async (candidate) => {
+        const world = candidate.getWorld();
+        candidate.replaceWorld({
+          ...world,
+          player: {
+            ...world.player,
+            gold: world.player.gold - item.price,
+            inventoryItemIds: [...world.player.inventoryItemIds, item.id],
+          },
+        });
+        return item;
+      },
+      (world) => SaveManager.save(world)
+    );
+
+    if (!outcome.committed) {
+      Logger.error("useWorldStore", `buyItem("${itemId}") failed at "${outcome.stage}" stage`, outcome.error);
+      set({ lastError: "The purchase couldn't be saved. Nothing changed." });
+      return false;
+    }
+
+    set((state) => ({
+      world: manager.getWorld(),
+      storyLog: [...state.storyLog, `Bought ${item.name} for ${item.price} gold.`],
+      lastSavedAt: new Date(),
+      lastError: null,
+    }));
+    return true;
+  },
+
 
   /**
    * not the same bug. advanceTime's bug was "mutate now, persist later,
