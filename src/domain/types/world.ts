@@ -7,30 +7,43 @@ import type { Quest } from "./quest";
 import type { RegionalReputation } from "./reputation";
 import type { WeatherState } from "./weather";
 
-export interface PlayerStats {
-  strength: number;
-  dexterity: number;
-  constitution: number;
-  intelligence: number;
-  wisdom: number;
-  charisma: number;
+/**
+ * The six MVP combat statistics (Part 8 of the combat/progression design).
+ * HP is tracked separately on PlayerCharacter/Combatant (current + max);
+ * these five drive all damage/turn-order math. No other combat attributes.
+ */
+export interface CombatStats {
+  attack: number;
+  defense: number;
+  magicPower: number;
+  magicDefense: number;
+  speed: number;
 }
 
 export interface PlayerCharacter {
   id: EntityId;
   name: string;
-  classId: string;
+  /** Identity, not a class — see src/data/origins.ts. */
+  raceId: string;
+  backgroundId: string;
+  /** Short narrative motivation chosen at creation (flavor only). */
+  motivation: string;
   level: number;
   xp: number;
   xpToNextLevel: number;
   hp: number;
   maxHp: number;
-  stamina: number;
-  maxStamina: number;
-  stats: PlayerStats;
+  /** Base combat stats before equipment. Effective stats = base + equipment. */
+  stats: CombatStats;
   gold: number;
   currentSettlementId: EntityId;
   inventoryItemIds: EntityId[];
+  /** Equipped items that modify combat stats (see src/data/equipment.ts). */
+  equipmentItemIds: EntityId[];
+  /** Unlocked non-combat (world/dialogue) ability ids — see src/data/abilities.ts. */
+  characterAbilityIds: string[];
+  /** Unlocked combat ability ids. */
+  combatAbilityIds: string[];
   reputations: RegionalReputation[];
 }
 

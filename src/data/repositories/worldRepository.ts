@@ -7,17 +7,45 @@ import { factionRepository } from "./factionRepository";
 import { kingdomRepository } from "./kingdomRepository";
 import { eventRepository } from "./eventRepository";
 
-const CURRENT_SAVE_VERSION = 3; // bumped when PlayerCharacter gained stats/xp/stamina (UI redesign pass)
+const CURRENT_SAVE_VERSION = 4; // bumped for combat/progression: combat stats, abilities, equipment
 
 const DEFAULT_WEATHER: WeatherState = { current: "clear", daysInCurrentState: 0 };
 
-const DEFAULT_PLAYER_STAT_FIELDS = {
-  xp: 0,
-  xpToNextLevel: 100,
-  stamina: 20,
-  maxStamina: 20,
-  stats: { strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 },
-};
+const DEFAULT_COMBAT_STATS = { attack: 6, defense: 5, magicPower: 5, magicDefense: 5, speed: 5 };
+
+/**
+ * Forward-migrates a persisted player onto the current combat/progression
+ * shape. Old saves (save v3 and earlier) had 6 D&D attributes, classId,
+ * and stamina and NO combat stats/abilities/equipment — those are reset to
+ * sensible defaults rather than crashing (accepted, documented migration:
+ * an old hero keeps level/xp/gold/hp but starts the new combat model fresh).
+ */
+function migratePlayer(raw: any): PlayerCharacter {
+  const hasCombatStats = raw?.stats && typeof raw.stats.attack === "number";
+  const maxHp = typeof raw?.maxHp === "number" ? raw.maxHp : 30;
+  return {
+    id: raw.id,
+    name: raw.name,
+    raceId: raw.raceId ?? "human",
+    backgroundId: raw.backgroundId ?? "wanderer",
+    motivation: raw.motivation ?? "",
+    level: Math.min(12, Math.max(1, raw.level ?? 1)),
+    xp: raw.xp ?? 0,
+    xpToNextLevel: raw.xpToNextLevel ?? 100,
+    hp: typeof raw?.hp === "number" ? raw.hp : maxHp,
+    maxHp,
+    stats: hasCombatStats
+      ? { attack: raw.stats.attack, defense: raw.stats.defense, magicPower: raw.stats.magicPower, magicDefense: raw.stats.magicDefense, speed: raw.stats.speed }
+      : { ...DEFAULT_COMBAT_STATS },
+    gold: raw.gold ?? 0,
+    currentSettlementId: raw.currentSettlementId,
+    inventoryItemIds: raw.inventoryItemIds ?? [],
+    equipmentItemIds: raw.equipmentItemIds ?? [],
+    characterAbilityIds: raw.characterAbilityIds ?? [],
+    combatAbilityIds: raw.combatAbilityIds ?? [],
+    reputations: raw.reputations ?? [],
+  };
+}
 
 async function getMeta(key: string): Promise<string | null> {
   const db = await getDb();
@@ -99,11 +127,9 @@ export const worldRepository = {
       seed: seedJson ? Number(seedJson) : 1,
       currentDate: JSON.parse(dateJson) as GameDate,
       weather: weatherJson ? (JSON.parse(weatherJson) as WeatherState) : DEFAULT_WEATHER,
-      // Spread defaults first so a save from before Phase (character stats
-      // redesign) still loads — any field the old save DID have overrides
-      // the default; anything it's missing gets a sane starting value
-      // instead of the app crashing on `player.stats.strength`.
-      player: { ...DEFAULT_PLAYER_STAT_FIELDS, ...(JSON.parse(playerJson) as PlayerCharacter) },
+      // Migrate the persisted player onto the current combat/progression
+      // shape (see migratePlayer) so pre-combat-milestone saves still load.
+      player: migratePlayer(JSON.parse(playerJson)),
       kingdoms: Object.fromEntries(kingdoms.map((k) => [k.id, k])),
       settlements: Object.fromEntries(settlements.map((s) => [s.id, s])),
       factions: Object.fromEntries(factions.map((f) => [f.id, f])),

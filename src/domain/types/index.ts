@@ -7,6 +7,7 @@ export * from "./quest";
 export * from "./shop";
 export * from "./dialogue";
 export * from "./combat";
+export * from "./progression";
 export * from "./reputation";
 export * from "./weather";
 export * from "./world";

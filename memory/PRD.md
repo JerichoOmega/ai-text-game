@@ -1,5 +1,29 @@
 # Chronicle — PRD / Working Memory
 
+## Combat, Progression & Leveling (2026-06)
+New official MVP combat + character-progression foundation. Deterministic systems, simple text-first UX.
+- **Six combat stats only**: HP + Attack/Defense/MagicPower/MagicDefense/Speed (`CombatStats`).
+  Removed the 6 D&D attributes; old saves migrate via `worldRepository.migratePlayer` (save v4).
+- **Single deterministic engine** (`src/systems/CombatEngine.ts`): physical = Atk+power-Def,
+  magic = MPow+power-MDef, floor 1; heal = power+floor(MPow/2); defend halves next hit; turn order
+  by Speed (player wins ties); defeat at HP≤0. `CombatSystem` sets up encounters + keeps the existing
+  `bandit_leader_slain` victory→quest bridge + a headless autoResolve (same engine) for tests.
+- **Progression** (`src/systems/ProgressionSystem.ts`): cap 12; one ability/level alternating
+  (L1 Character…L12 Combat → 6+6); fixed stat growth; XP curve 100+(lvl-1)*60; XP frozen at cap;
+  level-up choices (3–4) deterministic per world seed, derived from unlock counts (no extra persisted state).
+- **Character creation** (`new-adventure.tsx`): name→race(5)→background(5)→motivation(4); no classes;
+  race+background give a small deterministic stat bias; background grants the L1 Character ability +
+  starting equipment (`CharacterSystem.createStartingPlayer`).
+- **Data**: `abilities` (12 character + 12 combat + Basic Attack), `equipment` (flat modifiers),
+  `enemies` (level-scaled), `origins`. Player stores only ids.
+- **UI**: text-first `app/combat.tsx` (enemy/you HP, log, 3–5 actions, inline level-up), rebuilt
+  Character tab (six stats + ability/equipment lists). Quest battles now enter `/combat`.
+- **Defeat (MVP)**: HP≤0 → defeat, restore to 1 HP, no permadeath, progress intact. Richer system = future.
+- **Verified**: tsc 0 errors; 79/79 tests (28 new); Metro resolves 1256 modules (Hermes bytecode blocked
+  by aarch64/x86-64). On-device rendering / SQLite / haptics NOT verified here.
+- **P1 backlog**: enemy abilities in combat, inventory/equip UI, XP from quests/story, defeat/recovery system.
+
+
 ## Canonical 12 NPCs + unified dialogue (2026-06)
 Completed the NPC character & visual-consistency milestone (separate content pool from shopkeepers).
 - 12 canonical NPCs in `src/data/npcRegistry.ts` (node-safe: identities, emotion→expression aliasing,

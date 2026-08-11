@@ -1,4 +1,4 @@
-import type { WorldState } from "@/domain/types";
+import type { PlayerOrigin, WorldState } from "@/domain/types";
 import { worldRepository } from "@/data/repositories/worldRepository";
 import { resetDb } from "@/data/db";
 import { buildSeedWorld } from "@/data/seed/seedWorld";
@@ -45,11 +45,11 @@ export const SaveManager = {
    * launch. Uses the same repositories/seed as loadOrCreate — no second
    * persistence path.
    */
-  async createNewWorld(playerName: string): Promise<WorldStateManager> {
+  async createNewWorld(playerName: string, origin?: PlayerOrigin): Promise<WorldStateManager> {
     registerAllEventSubscribers();
     await resetDb();
 
-    const fresh = buildSeedWorld(playerName);
+    const fresh = buildSeedWorld(playerName, origin);
     const manager = new WorldStateManager(fresh);
 
     const initialQuests = QuestGenerator.generateAvailableQuests(manager, fresh.currentDate, 5);

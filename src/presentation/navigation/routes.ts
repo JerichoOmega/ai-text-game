@@ -25,4 +25,5 @@ export const routes = {
   quests: "/quests" as const,
   shop: (npcId: EntityId) => `/shop?npcId=${npcId}` as const,
   npc: (id: EntityId) => `/npc/${id}` as const,
+  combat: "/combat" as const,
 };

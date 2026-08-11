@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import type { WorldState } from "@/domain/types";
+import { create, type StoreApi } from "zustand";
+import type { CombatAction, CombatEncounter, CombatOutcome, PlayerOrigin, WorldState } from "@/domain/types";
 import { WorldStateManager } from "@/systems/WorldStateManager";
 import { SaveManager } from "@/systems/SaveManager";
 import { TimeSystem } from "@/systems/TimeSystem";
@@ -8,9 +8,24 @@ import { NPCMemorySystem } from "@/systems/NPCMemorySystem";
 import { DialogueSystem } from "@/systems/DialogueSystem";
 import { EventEngine } from "@/systems/EventEngine";
 import { CombatSystem } from "@/systems/CombatSystem";
+import { resolveRound } from "@/systems/CombatEngine";
+import { ProgressionSystem } from "@/systems/ProgressionSystem";
 import { COMBAT_OBJECTIVE_TYPES } from "@/systems/QuestSystem";
 import { findShopItem } from "@/data/shopCatalog";
 import { Logger } from "@/utils/logger";
+
+interface CombatContext {
+  questId: string;
+  objectiveId: string;
+  locationIds: string[];
+}
+
+interface CombatSummary {
+  outcome: CombatOutcome;
+  xpGained: number;
+  leveledFrom: number;
+  leveledTo: number;
+}
 
 interface WorldStore {
   world: WorldState | null;
@@ -28,14 +43,98 @@ interface WorldStore {
    * pattern as the audio volume state. */
   lastError: string | null;
 
+  /** Live interactive combat state (null when not in a fight). */
+  combat: CombatEncounter | null;
+  combatLog: string[];
+  combatContext: CombatContext | null;
+  combatSummary: CombatSummary | null;
+  /** Consumable item ids used during the current fight, removed on finish. */
+  combatConsumed: string[];
+
   initialize: (playerNameIfNew: string) => Promise<void>;
-  startNewAdventure: (name: string) => Promise<void>;
+  startNewAdventure: (name: string, origin?: PlayerOrigin) => Promise<void>;
   advanceTime: (days: number) => Promise<void>;
-  resolveQuestBattle: (questId: string) => Promise<void>;
+  beginQuestBattle: (questId: string) => boolean;
+  combatAct: (action: CombatAction) => Promise<void>;
+  chooseLevelUpAbility: (abilityId: string) => Promise<void>;
+  endCombat: () => void;
   buyItem: (itemId: string) => Promise<boolean>;
   talkTo: (npcId: string) => void;
   pushLog: (line: string) => void;
   saveNow: () => Promise<void>;
+}
+
+/**
+ * Commits a finished encounter: sets the player's post-fight HP, awards XP
+ * (and applies any level-ups) on victory, restores to 1 HP on defeat (Part
+ * 24 MVP: no permadeath), and dispatches the quest victory event so the
+ * existing objective->completion->reward pipeline runs. All inside one
+ * transaction — persisted before it becomes authoritative.
+ */
+async function finishCombat(
+  get: () => WorldStore,
+  set: StoreApi<WorldStore>["setState"],
+  encounter: CombatEncounter
+): Promise<void> {
+  const { manager, combatContext } = get();
+  if (!manager) return;
+  const leveledFrom = manager.getWorld().player.level;
+  const consumed = get().combatConsumed;
+
+  const outcome = await runTransactionalWorldUpdate(
+    manager,
+    async (candidate) => {
+      const w = candidate.getWorld();
+      let inventoryItemIds = w.player.inventoryItemIds;
+      for (const id of consumed) {
+        const idx = inventoryItemIds.indexOf(id);
+        if (idx >= 0) inventoryItemIds = [...inventoryItemIds.slice(0, idx), ...inventoryItemIds.slice(idx + 1)];
+      }
+      let player = { ...w.player, hp: Math.max(0, encounter.player.hp), inventoryItemIds };
+      let xpGained = 0;
+      if (encounter.outcome === "victory") {
+        xpGained = CombatSystem.totalXpReward(encounter);
+        player = ProgressionSystem.grantXp(player, xpGained).player;
+      }
+      if (encounter.outcome === "defeat") {
+        player = { ...player, hp: 1 };
+      }
+      candidate.replaceWorld({ ...w, player });
+
+      if (encounter.outcome === "victory" && combatContext) {
+        const victory = CombatSystem.victoryEvent(encounter, {
+          timestamp: w.currentDate,
+          locationIds: combatContext.locationIds,
+        });
+        if (victory) await EventEngine.dispatch(candidate, victory);
+      }
+      return { xpGained };
+    },
+    (w) => SaveManager.save(w)
+  );
+
+  if (!outcome.committed) {
+    Logger.error("useWorldStore", "finishCombat failed", outcome.error);
+    set({ lastError: "The battle ended, but saving failed." });
+    return;
+  }
+
+  const player = manager.getWorld().player;
+  set((state) => ({
+    world: manager.getWorld(),
+    combatSummary: {
+      outcome: encounter.outcome,
+      xpGained: outcome.result.xpGained,
+      leveledFrom,
+      leveledTo: player.level,
+    },
+    lastSavedAt: new Date(),
+    lastError: null,
+    storyLog:
+      encounter.outcome === "victory"
+        ? [...state.storyLog, `Victory! You gained ${outcome.result.xpGained} XP.`]
+        : state.storyLog,
+  }));
 }
 
 /**
@@ -50,6 +149,11 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
   storyLog: [],
   lastSavedAt: null,
   lastError: null,
+  combat: null,
+  combatLog: [],
+  combatContext: null,
+  combatSummary: null,
+  combatConsumed: [],
 
   initialize: async (playerNameIfNew: string) => {
     set({ loading: true, lastError: null });
@@ -67,10 +171,10 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
    * save (see SaveManager.createNewWorld). Resets the in-memory story log
    * so the new game doesn't inherit the previous one's messages.
    */
-  startNewAdventure: async (name: string) => {
+  startNewAdventure: async (name: string, origin?: PlayerOrigin) => {
     set({ loading: true, lastError: null });
     try {
-      const manager = await SaveManager.createNewWorld(name.trim() || "Wanderer");
+      const manager = await SaveManager.createNewWorld(name.trim() || "Wanderer", origin);
       set({ manager, world: manager.getWorld(), loading: false, lastSavedAt: new Date(), storyLog: [] });
     } catch (err) {
       Logger.error("useWorldStore", "startNewAdventure failed", err);
@@ -117,76 +221,82 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
   },
 
   /**
-   * Drives the core gameplay loop for a quest's combat objective:
-   * resolve an encounter, and on victory dispatch the combat-victory
-   * world event through EventEngine. From there the existing EventBus
-   * subscribers carry it the rest of the way — quest objective progress
-   * (questProgressSubscriber) -> authoritative completion (QuestSystem)
-   * -> reward + reputation -> history + NPC memory + world consequences.
-   *
-   * Runs inside runTransactionalWorldUpdate so a failure leaves the
-   * authoritative world exactly as it was, and persistence succeeds before
-   * the result is committed. All gameplay logic lives in systems/; this
-   * store action only orchestrates and surfaces the result to the UI.
+   * Sets up an interactive encounter for a quest's combat objective and
+   * puts the store into "in combat" mode. No persistence happens here — the
+   * fight plays out in memory (combatAct) and only commits at the end
+   * (finishCombat). The screen navigates to /combat after this returns true.
    */
-  resolveQuestBattle: async (questId: string) => {
-    const { manager } = get();
-    if (!manager) return;
+  beginQuestBattle: (questId: string) => {
+    const { manager, world } = get();
+    if (!manager || !world) return false;
+    const quest = world.quests[questId];
+    if (!quest) return false;
+    const objective = quest.objectives.find((o) => !o.complete && COMBAT_OBJECTIVE_TYPES.has(o.type));
+    if (!objective) return false;
+
+    const encounter = CombatSystem.startQuestEncounter(world.player);
+    const enemyName = encounter.enemies[0]?.name ?? "the enemy";
+    set({
+      combat: encounter,
+      combatLog: [`A ${enemyName} blocks your path. Steel yourself.`],
+      combatContext: { questId, objectiveId: objective.id, locationIds: objective.targetId ? [objective.targetId] : [] },
+      combatSummary: null,
+      combatConsumed: [],
+    });
+    return true;
+  },
+
+  /**
+   * Resolves one combat round through the single CombatEngine, appends the
+   * narration, and — if the fight ended — commits the outcome (XP, HP,
+   * quest event) transactionally. Deterministic: no RNG here.
+   */
+  combatAct: async (action: CombatAction) => {
+    const { combat, combatLog, combatConsumed } = get();
+    if (!combat || combat.outcome !== "ongoing") return;
+    if (action.type === "flee" && !combat.canFlee) return;
+
+    if (action.type === "item" && action.itemId) {
+      set({ combatConsumed: [...combatConsumed, action.itemId] });
+    }
+
+    const { encounter, log } = resolveRound(combat, action);
+    set({ combat: encounter, combatLog: [...combatLog, ...log] });
+
+    if (encounter.outcome !== "ongoing") {
+      await finishCombat(get, set, encounter);
+    }
+  },
+
+  /**
+   * Applies a level-up ability choice (validated in ProgressionSystem so a
+   * player can never unlock two from one level or the wrong category) and
+   * persists it. The combat screen re-reads pendingAbilitySelection after.
+   */
+  chooseLevelUpAbility: async (abilityId: string) => {
+    const { manager, world } = get();
+    if (!manager || !world) return;
 
     const outcome = await runTransactionalWorldUpdate(
       manager,
       async (candidate) => {
-        const quest = candidate.getQuest(questId);
-        if (!quest) return { logLines: ["That quest is no longer available."], completed: false };
-
-        const objective = quest.objectives.find((o) => !o.complete && COMBAT_OBJECTIVE_TYPES.has(o.type));
-        if (!objective) return { logLines: ["There is no battle to resolve for this quest."], completed: false };
-
-        const world = candidate.getWorld();
-        const location = objective.targetId ? candidate.getSettlement(objective.targetId) : undefined;
-        const { encounter, logLines } = CombatSystem.resolveAutoBattle(world.player);
-
-        const victory = CombatSystem.victoryEvent(encounter, {
-          timestamp: world.currentDate,
-          locationIds: objective.targetId ? [objective.targetId] : [],
-          description: location
-            ? `The raiders threatening the roads near ${location.name} were driven off.`
-            : "The raiders threatening the roads were driven off.",
-        });
-
-        if (!victory) {
-          logLines.push("You were beaten back and must recover before trying again.");
-          return { logLines, completed: false };
-        }
-
-        await EventEngine.dispatch(candidate, victory);
-
-        const after = candidate.getQuest(questId);
-        const completed = after?.status === "completed";
-        if (completed) logLines.push(`Quest complete: "${quest.title}".`);
-        return { logLines, completed };
+        const w = candidate.getWorld();
+        const player = ProgressionSystem.applyAbilityChoice(w.player, abilityId, w.seed);
+        candidate.replaceWorld({ ...w, player });
+        return player;
       },
-      (world) => SaveManager.save(world)
+      (w) => SaveManager.save(w)
     );
 
     if (!outcome.committed) {
-      Logger.error("useWorldStore", `resolveQuestBattle failed at "${outcome.stage}" stage`, outcome.error);
-      set({
-        lastError:
-          outcome.stage === "simulate"
-            ? "Something went wrong resolving the battle. Nothing changed — your world is exactly as it was."
-            : "The battle was resolved, but saving failed. Nothing changed — your world is exactly as it was.",
-      });
+      Logger.error("useWorldStore", "chooseLevelUpAbility failed", outcome.error);
+      set({ lastError: "Couldn't save your new ability." });
       return;
     }
-
-    set((state) => ({
-      world: manager.getWorld(),
-      storyLog: [...state.storyLog, ...outcome.result.logLines],
-      lastSavedAt: new Date(),
-      lastError: null,
-    }));
+    set({ world: manager.getWorld(), lastSavedAt: new Date(), lastError: null });
   },
+
+  endCombat: () => set({ combat: null, combatLog: [], combatContext: null, combatSummary: null, combatConsumed: [] }),
 
   /**
    * Buys a deterministic shop-catalog item: deducts its price from the

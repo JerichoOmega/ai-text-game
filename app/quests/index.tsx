@@ -1,16 +1,23 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
 import { QuestCard } from "@/presentation/components/QuestCard";
 import { ActionButton } from "@/presentation/components/ActionButton";
 import { COMBAT_OBJECTIVE_TYPES } from "@/systems/QuestSystem";
+import { routes } from "@/presentation/navigation/routes";
 
 export default function QuestsScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const world = useWorldStore((s) => s.world);
-  const resolveQuestBattle = useWorldStore((s) => s.resolveQuestBattle);
+  const beginQuestBattle = useWorldStore((s) => s.beginQuestBattle);
+
+  const startBattle = (questId: string) => {
+    if (beginQuestBattle(questId)) router.push(routes.combat);
+  };
 
   const quests = world
     ? Object.values(world.quests).filter((q) => q.status === "available" || q.status === "active")
@@ -32,9 +39,9 @@ export default function QuestsScreen() {
               {battleObjective && (
                 <View style={styles.actionWrap} testID={`quest-resolve-wrap-${quest.id}`}>
                   <ActionButton
-                    label="Resolve battle"
+                    label="Enter battle"
                     accessibilityHint="Fight the threat this quest asks you to clear"
-                    onPress={() => resolveQuestBattle(quest.id)}
+                    onPress={() => startBattle(quest.id)}
                   />
                 </View>
               )}

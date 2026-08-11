@@ -13,6 +13,7 @@ import { JourneyCard } from "@/presentation/components/JourneyCard";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
 import { routes } from "@/presentation/navigation/routes";
 import { capitalize } from "@/utils/format";
+import { getRace, getBackground } from "@/data/origins";
 
 /**
  * The mockup's version of this screen is a literal illustrated leather
@@ -61,11 +62,9 @@ export default function JournalScreen() {
           <CharacterHeader
             name={player.name}
             level={player.level}
-            classId={player.classId}
+            subtitle={`${getRace(player.raceId)?.name ?? "Traveler"} ${getBackground(player.backgroundId)?.name ?? ""}`.trim()}
             hp={player.hp}
             maxHp={player.maxHp}
-            stamina={player.stamina}
-            maxStamina={player.maxStamina}
             chips={[
               { icon: "location", label: settlement?.name ?? "Unknown" },
               { icon: "leaf", label: capitalize(world.currentDate.season) },

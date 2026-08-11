@@ -125,3 +125,30 @@ existed but were never wired into an actual loop:
   WorldTransaction still wraps the store action; no new persistence layer,
   no second event framework, no UI-owned gameplay logic (the Quest Log
   button only calls a store action).
+
+## Combat, Character Progression & Leveling (2026-06)
+Replaced the placeholder combat with one deterministic, stat-driven system.
+- **Stat model**: removed the 6 D&D attributes; player now uses the six
+  combat stats (HP + Attack/Defense/MagicPower/MagicDefense/Speed). Old
+  saves migrate safely (worldRepository.migratePlayer, save v4).
+- **Single engine**: rewrote `CombatEngine` (stat-driven damage, Speed turn
+  order, defend/heal, defeat at 0 HP) and `CombatSystem` (encounter setup +
+  the existing bandit_leader_slain victory bridge + headless autoResolve for
+  the quest event pipeline). Old position/status-effect auto-battle removed;
+  `resolveQuestBattle` replaced by interactive `beginQuestBattle`/`combatAct`.
+- **Progression**: `ProgressionSystem` — cap 12, alternating one-ability-
+  per-level (6 Character + 6 Combat), fixed stat growth, deterministic
+  seed-stable level-up choices, XP frozen at cap.
+- **Abilities/equipment/enemies/origins**: centralized data modules
+  (`abilities`, `equipment`, `enemies`, `origins`). Player stores only ids.
+- **UI**: new text-first `app/combat.tsx` (with inline level-up choice) and
+  expanded character creation (`new-adventure.tsx`: race/background/
+  motivation). Character tab rebuilt around the six stats + ability/equipment
+  lists. `CharacterHeader` dropped stamina/classId.
+- **Verified**: typecheck 0 errors; **79/79 tests** (28 new: combat,
+  progression, character creation) covering Part 33's leveling/XP/combat/
+  persistence-shape/determinism/ability-availability requirements; Metro
+  resolves 1256 modules (Hermes bytecode still blocked by aarch64/x86-64).
+  On-device rendering / real SQLite / haptics NOT verified (no simulator).
+- **Sweeps clean**: one combat resolver, no uncontrolled Math.random in
+  combat/progression, no duplicate ability defs, no stale auto-resolve path.

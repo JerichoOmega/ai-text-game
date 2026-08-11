@@ -606,3 +606,68 @@ run against this change — no network in this environment to install
 dependencies (`tsc`, `tsx`)... Every changed/new file was manually re-read
 line by line for type consistency... as the best available substitute, but
 that is not the same guarantee actual compilation provides."
+
+## Combat & Progression (MVP)
+
+Chronicle's RPG systems are real and deterministic underneath a text-first
+interface. One resolver, one stat model, one progression path.
+
+### Combat stats (the only six)
+`HP` (current + max) plus `Attack, Defense, Magic Power, Magic Defense,
+Speed` (`CombatStats`). No other combat attributes; the old six D&D
+attributes were removed. Effective stats = base + equipped item modifiers.
+
+### Formulas (deterministic, no RNG)
+- Physical: `max(1, attacker.Attack + abilityPower - defender.Defense)`
+- Magic: `max(1, attacker.MagicPower + abilityPower - defender.MagicDefense)`
+- Heal: `abilityPower + floor(caster.MagicPower / 2)`, capped at max HP
+- Defend / Guard: halves the next incoming hit this round (ceil, min 1)
+- Turn order: highest Speed first; ties go to the player
+- Defeat at HP ≤ 0. `CombatEngine` (src/systems/CombatEngine.ts) is the
+  single rules module; screens/store only orchestrate.
+
+### Progression (Level 1–12)
+- Cap is **Level 12**; XP stops accruing at the cap (no Level 13).
+- One ability per level, category strictly alternating: **L1 Character, L2
+  Combat, … L12 Combat → exactly 6 Character + 6 Combat abilities.** The
+  player cannot convert a category or unlock two in one level.
+- Fixed automatic stat growth each level (`+6 maxHP, +2 Atk/Def/MPow/MDef,
+  +1 Speed`); no manual point allocation.
+- XP curve: `100 + (level-1)*60` to advance from a level. XP comes from
+  combat victories (and, architecturally, any future quest/story award).
+- Level-up ability choices (3–4 options) are deterministic per world seed,
+  derived from unlock-count vs. level so they survive save/load with no
+  extra persisted state (`ProgressionSystem.pendingAbilitySelection`).
+
+### Abilities & equipment
+- Two never-mixing pools in `src/data/abilities.ts` (12 Character, 12
+  Combat + an always-available Basic Attack). Player stores only ids.
+- Character abilities affect the world/dialogue/exploration; combat
+  abilities modify the combat math (physical/magic/guard/heal).
+- Equipment (`src/data/equipment.ts`) applies flat stat modifiers only —
+  no rarity/affix/durability.
+
+### Character creation (no classes)
+Name → Race (5) → Background (5) → Motivation (4). Race + background apply a
+small deterministic stat bias; the background grants the Level-1 Character
+Ability and any starting equipment. Identity, not a class.
+
+### Defeat (MVP)
+HP ≤ 0 ends the encounter in defeat with **no permadeath**: the player is
+restored to 1 HP and returned to play; level/XP/abilities/inventory/world
+progress are untouched. A richer defeat/recovery system is a future
+milestone (documented, not built).
+
+### Combat UI
+`app/combat.tsx` is text-first: enemy + HP, a narration log, player + HP,
+and 3–5 actions (Attack, unlocked abilities, Defend, Item if a consumable
+is carried, Flee when allowed). On victory it awards XP and runs the
+level-up ability choice inline. Quest battles enter here via
+`beginQuestBattle` → `/combat`; the old auto-resolve path is gone.
+
+### Not verified in this environment
+The combat/creation *logic* is covered by the automated suite
+(tests/combat, tests/progression, tests/characterCreation) and types; the
+on-device rendering of `combat.tsx`/creation UI, real haptics, and true
+SQLite save/load are NOT verified here (no simulator; Hermes bytecode can't
+build on this host's architecture). Not claimed as device-verified.

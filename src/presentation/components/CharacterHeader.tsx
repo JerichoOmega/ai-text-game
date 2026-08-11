@@ -12,21 +12,19 @@ const HERO_PORTRAIT = require("../../../assets/images/hero-portrait.jpg");
 interface CharacterHeaderProps {
   name: string;
   level: number;
-  classId: string;
+  subtitle: string;
   hp: number;
   maxHp: number;
-  stamina: number;
-  maxStamina: number;
   chips: Array<{ icon: React.ComponentProps<typeof Ionicons>["name"]; label: string }>;
 }
 
 /**
  * Painted hero portrait art (Design Bible Character screen). The lettered
  * initial remains as an accessibility label and a graceful fallback if the
- * image ever fails to load. Swap the portrait source to a per-class or
- * per-character asset later; layout is unchanged.
+ * image ever fails to load. Swap the portrait source to a per-character
+ * asset later; layout is unchanged.
  */
-export function CharacterHeader({ name, level, classId, hp, maxHp, stamina, maxStamina, chips }: CharacterHeaderProps) {
+export function CharacterHeader({ name, level, subtitle, hp, maxHp, chips }: CharacterHeaderProps) {
   const theme = useTheme();
   const initial = name.charAt(0).toUpperCase();
 
@@ -51,14 +49,13 @@ export function CharacterHeader({ name, level, classId, hp, maxHp, stamina, maxS
             {name}
           </Text>
           <Text style={[styles.classLine, { color: theme.inkMuted, fontSize: scaledFontSize(typeScale.caption) }]}>
-            Level {level} · {capitalize(classId)}
+            Level {level} · {capitalize(subtitle)}
           </Text>
         </View>
       </View>
 
       <View style={styles.barsBlock}>
         <StatBar label="Health" current={hp} max={maxHp} color={theme.wax} />
-        <StatBar label="Stamina" current={stamina} max={maxStamina} color={theme.forest} />
       </View>
 
       {chips.length > 0 && (

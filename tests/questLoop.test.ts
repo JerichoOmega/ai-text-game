@@ -94,9 +94,8 @@ function makeQuest(overrides: Partial<Quest> = {}): Quest {
 
 test("combat: an auto-resolved encounter produces a deterministic player victory", () => {
   const player = makeTestWorld().player;
-  const { encounter } = CombatSystem.resolveAutoBattle(player);
-  assert.equal(encounter.resolved, true);
-  assert.equal(encounter.playerVictorious, true);
+  const { encounter } = CombatSystem.autoResolveEncounter(player);
+  assert.equal(encounter.outcome, "victory");
 });
 
 test("combat result advances the appropriate quest objective (via the event bus)", async () => {
@@ -104,7 +103,7 @@ test("combat result advances the appropriate quest objective (via the event bus)
   eventBus.reset();
   registerQuestProgressSubscriber();
 
-  const { encounter } = CombatSystem.resolveAutoBattle(manager.getWorld().player);
+  const { encounter } = CombatSystem.autoResolveEncounter(manager.getWorld().player);
   const victory = CombatSystem.victoryEvent(encounter, { timestamp: DATE, locationIds: [settlement.id] });
   assert.ok(victory);
 

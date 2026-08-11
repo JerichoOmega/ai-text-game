@@ -5,12 +5,15 @@ import type {
   NPC,
   NpcRole,
   PlayerCharacter,
+  PlayerOrigin,
   Settlement,
   WorldState,
 } from "@/domain/types";
 import { createId } from "@/utils/id";
 import { assignShopkeepers } from "@/data/shopkeepers";
 import { assignRecurringNpcs } from "@/data/npcRegistry";
+import { CharacterSystem } from "@/systems/CharacterSystem";
+import { DEFAULT_ORIGIN } from "@/data/origins";
 
 const START_DATE: GameDate = { year: 212, season: "spring", day: 1 };
 
@@ -42,7 +45,7 @@ function makeNpc(name: string, role: NpcRole, settlementId: string, factionId: s
   };
 }
 
-export function buildSeedWorld(playerName: string, seed: number = Math.floor(Math.random() * 0x7fffffff)): WorldState {
+export function buildSeedWorld(playerName: string, origin: PlayerOrigin = DEFAULT_ORIGIN, seed: number = Math.floor(Math.random() * 0x7fffffff)): WorldState {
   const kingdomId = createId("kingdom");
   const factionMerchantId = createId("faction");
   const factionWatchId = createId("faction");
@@ -149,23 +152,12 @@ export function buildSeedWorld(playerName: string, seed: number = Math.floor(Mat
   // slots (never merchant/innkeeper/shopkeeper). Separate pool from shopkeepers.
   const npcsFinal = assignRecurringNpcs(npcsWithShopkeepers, seed);
 
-  const player: PlayerCharacter = {
+  const player: PlayerCharacter = CharacterSystem.createStartingPlayer({
     id: createId("player"),
     name: playerName,
-    classId: "wanderer",
-    level: 1,
-    xp: 0,
-    xpToNextLevel: 100,
-    hp: 30,
-    maxHp: 30,
-    stamina: 20,
-    maxStamina: 20,
-    stats: { strength: 12, dexterity: 12, constitution: 12, intelligence: 10, wisdom: 10, charisma: 10 },
-    gold: 20,
     currentSettlementId: eastbridgeId,
-    inventoryItemIds: [],
-    reputations: [],
-  };
+    origin,
+  });
 
   return {
     saveVersion: 1,
