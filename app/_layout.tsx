@@ -59,6 +59,7 @@ function AppContent() {
         <Stack.Screen name="npc/[id]" options={{ title: "" }} />
         <Stack.Screen name="shop" options={{ headerShown: false }} />
         <Stack.Screen name="combat" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="inventory" options={{ title: "Inventory" }} />
         <Stack.Screen name="quests/index" options={{ title: "Quest Log" }} />
       </Stack>
     </SafeAreaProvider>

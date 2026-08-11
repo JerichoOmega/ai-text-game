@@ -1,5 +1,22 @@
 # Chronicle — PRD / Working Memory
 
+## Inventory & Equipment (2026-06)
+Small text-first inventory; makes weapons/armor/shop purchases meaningful. Reuses the combat stat path.
+- **Audited conflict fixed**: shop and equipment used two id namespaces, so purchased gear did nothing.
+  Bridged by giving shop equippables real `equipment.ts` defs (`item_iron_sword`→weapon +3 Atk,
+  `item_travelers_cloak`→armor +2 Def/+1 Spd). One id space; no mapping layer.
+- `EquipmentSystem` (pure `equipItem`/`unequipItem`, one item per slot, invalid ops rejected) +
+  store `equipItem`/`unequipItem` through WorldTransaction/SaveManager. `equipmentBonus` →
+  `CharacterSystem.effectiveStats` stays the single stat path; `CombatSystem.toPlayerCombatant`
+  already builds from it, so interactive + auto combat both read equipped stats (formulas untouched).
+- `app/inventory.tsx`: live effective stats (base shown), Weapon/Armor slots + Unequip, inventory list +
+  Equip. Reached from the Journal Inventory row. shop.tsx / shopkeepers / leveling untouched. No schema
+  change (both id lists already persisted as JSON).
+- **Verified**: tsc 0 errors; 89/89 tests (10 new); Metro resolves 1258 modules (Hermes blocked by
+  aarch64/x86-64). On-device UI rendering NOT verified (no simulator/browser target in container).
+- **P1 backlog**: enemy abilities, XP from quests/story, defeat/recovery sanctuaries, inventory sort/stack.
+
+
 ## Combat, Progression & Leveling (2026-06)
 New official MVP combat + character-progression foundation. Deterministic systems, simple text-first UX.
 - **Six combat stats only**: HP + Attack/Defense/MagicPower/MagicDefense/Speed (`CombatStats`).

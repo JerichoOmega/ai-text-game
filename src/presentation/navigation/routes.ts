@@ -26,4 +26,5 @@ export const routes = {
   shop: (npcId: EntityId) => `/shop?npcId=${npcId}` as const,
   npc: (id: EntityId) => `/npc/${id}` as const,
   combat: "/combat" as const,
+  inventory: "/inventory" as const,
 };

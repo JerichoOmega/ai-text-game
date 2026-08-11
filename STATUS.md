@@ -152,3 +152,18 @@ Replaced the placeholder combat with one deterministic, stat-driven system.
   On-device rendering / real SQLite / haptics NOT verified (no simulator).
 - **Sweeps clean**: one combat resolver, no uncontrolled Math.random in
   combat/progression, no duplicate ability defs, no stale auto-resolve path.
+
+## Inventory & Equipment (2026-06)
+Small text-first inventory that makes gear/shop purchases matter — reuses the existing stat path.
+- **Bridged the shop↔equipment id gap** (the audited conflict): shop equippables now have real
+  `equipment.ts` defs (`item_iron_sword` weapon +3 Atk, `item_travelers_cloak` armor +2 Def/+1 Spd),
+  so a purchased id is equippable. No mapping layer, no second id space.
+- New `EquipmentSystem` (pure equip/unequip, one-item-per-slot, safe rejection of invalid ops) + store
+  `equipItem`/`unequipItem` actions through WorldTransaction/SaveManager. `effectiveStats`/`equipmentBonus`
+  unchanged and remain the single authoritative stat path; combat reads equipped stats unchanged.
+- New `app/inventory.tsx` (live effective stats, Weapon/Armor slots, Equip/Unequip); Journal Inventory row
+  enabled. shop.tsx / shopkeeper system / combat formulas / leveling untouched.
+- **Verified**: tsc 0 errors; **89/89 tests** (10 new: ownership/equip/equip-armor/unequip/effective-stats/
+  slot-swap/combat-integration/invalid-op/determinism/persistence-shape/no-mutation); Metro resolves 1258
+  modules (Hermes still blocked by aarch64/x86-64). On-device UI NOT verified (no simulator/browser target).
+- Sweeps clean: one effectiveStats, one equipmentBonus, one equip/unequip, no competing inventory system.

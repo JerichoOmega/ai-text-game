@@ -10,6 +10,7 @@ import { EventEngine } from "@/systems/EventEngine";
 import { CombatSystem } from "@/systems/CombatSystem";
 import { resolveRound } from "@/systems/CombatEngine";
 import { ProgressionSystem } from "@/systems/ProgressionSystem";
+import { EquipmentSystem } from "@/systems/EquipmentSystem";
 import { COMBAT_OBJECTIVE_TYPES } from "@/systems/QuestSystem";
 import { findShopItem } from "@/data/shopCatalog";
 import { Logger } from "@/utils/logger";
@@ -59,6 +60,8 @@ interface WorldStore {
   chooseLevelUpAbility: (abilityId: string) => Promise<void>;
   endCombat: () => void;
   buyItem: (itemId: string) => Promise<boolean>;
+  equipItem: (itemId: string) => Promise<void>;
+  unequipItem: (itemId: string) => Promise<void>;
   talkTo: (npcId: string) => void;
   pushLog: (line: string) => void;
   saveNow: () => Promise<void>;
@@ -348,6 +351,58 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
       lastError: null,
     }));
     return true;
+  },
+
+  /**
+   * Equips an owned item (weapon/armor/trinket). Delegates the id-shuffle to
+   * EquipmentSystem (pure), then persists through the same
+   * WorldTransaction/SaveManager boundary as every other player mutation.
+   * effectiveStats — and therefore combat — pick up the change automatically.
+   */
+  equipItem: async (itemId: string) => {
+    const { manager } = get();
+    if (!manager) return;
+    const before = manager.getWorld().player;
+    const next = EquipmentSystem.equipItem(before, itemId);
+    if (next === before) return; // invalid op — no-op, no save
+
+    const outcome = await runTransactionalWorldUpdate(
+      manager,
+      async (candidate) => {
+        candidate.replaceWorld({ ...candidate.getWorld(), player: next });
+        return next;
+      },
+      (w) => SaveManager.save(w)
+    );
+    if (!outcome.committed) {
+      Logger.error("useWorldStore", `equipItem("${itemId}") failed`, outcome.error);
+      set({ lastError: "Couldn't save your equipment change." });
+      return;
+    }
+    set({ world: manager.getWorld(), lastSavedAt: new Date(), lastError: null });
+  },
+
+  unequipItem: async (itemId: string) => {
+    const { manager } = get();
+    if (!manager) return;
+    const before = manager.getWorld().player;
+    const next = EquipmentSystem.unequipItem(before, itemId);
+    if (next === before) return;
+
+    const outcome = await runTransactionalWorldUpdate(
+      manager,
+      async (candidate) => {
+        candidate.replaceWorld({ ...candidate.getWorld(), player: next });
+        return next;
+      },
+      (w) => SaveManager.save(w)
+    );
+    if (!outcome.committed) {
+      Logger.error("useWorldStore", `unequipItem("${itemId}") failed`, outcome.error);
+      set({ lastError: "Couldn't save your equipment change." });
+      return;
+    }
+    set({ world: manager.getWorld(), lastSavedAt: new Date(), lastError: null });
   },
 
 

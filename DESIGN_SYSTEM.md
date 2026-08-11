@@ -671,3 +671,30 @@ The combat/creation *logic* is covered by the automated suite
 on-device rendering of `combat.tsx`/creation UI, real haptics, and true
 SQLite save/load are NOT verified here (no simulator; Hermes bytecode can't
 build on this host's architecture). Not claimed as device-verified.
+
+## Inventory & Equipment (MVP)
+
+Small, text-first, and fully reusing the combat/progression stat path.
+
+- **One id space.** Shop-catalog equippables (`item_iron_sword`,
+  `item_travelers_cloak`) have real definitions in `src/data/equipment.ts`,
+  so a purchased id IS a valid equipment id. Buying adds the id to
+  `inventoryItemIds` (existing `buyItem`); the player later equips it.
+  Consumables/utility (potion, rope, torch) stay non-equippable.
+- **Slots:** Weapon + Armor (a dormant `trinket` slot exists in data but has
+  no shop/starting source). One item per slot — equipping swaps the old one
+  back to inventory.
+- **Single stat path (unchanged):** `EquipmentSystem.equip/unequipItem`
+  (pure) only move ids between `inventoryItemIds` and `equipmentItemIds`.
+  Stats still flow through `equipmentBonus` → `CharacterSystem.effectiveStats`,
+  which `CombatSystem.toPlayerCombatant` already builds every combatant from —
+  so both interactive and auto combat read equipped stats with no change to
+  the combat formulas.
+- **Persistence:** no schema change — both id lists were already persisted
+  whole-object JSON; equip/unequip commit through the existing
+  WorldTransaction/SaveManager boundary (store `equipItem`/`unequipItem`).
+- **UI:** `app/inventory.tsx` (reached from the Journal's Inventory row):
+  live effective-stat readout with base shown, Weapon/Armor slots with
+  Unequip, and an inventory list with Equip. Shop presentation untouched.
+- **Invalid ops rejected safely:** equipping a consumable or unowned item,
+  or unequipping something not equipped, is a no-op (no save).

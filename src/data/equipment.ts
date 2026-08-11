@@ -25,6 +25,10 @@ export const EQUIPMENT: EquipmentItem[] = [
   { id: "iron_armor", name: "Iron Armor", slot: "armor", description: "Heavy plates that turn blades.", modifiers: { defense: 4 } },
   { id: "warding_amulet", name: "Warding Amulet", slot: "trinket", description: "Hums faintly against hostile magic.", modifiers: { magicDefense: 3 } },
   { id: "swift_boots", name: "Swift Boots", slot: "trinket", description: "Light on the feet.", modifiers: { speed: 2 } },
+  // Shop-catalog equippables (ids match src/data/shopCatalog.ts so a purchased
+  // item is itself a valid equipment id — one id space, one stat path).
+  { id: "item_iron_sword", name: "Iron Sword", slot: "weapon", description: "A dependable iron blade.", modifiers: { attack: 3 } },
+  { id: "item_travelers_cloak", name: "Traveler's Cloak", slot: "armor", description: "Light and warm; surprisingly protective.", modifiers: { defense: 2, speed: 1 } },
 ];
 
 const BY_ID: Record<string, EquipmentItem> = Object.fromEntries(EQUIPMENT.map((e) => [e.id, e]));
