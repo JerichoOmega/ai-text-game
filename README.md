@@ -342,3 +342,26 @@ _Verification limits_: the RN app cannot be launched here (aarch64 vs x86-64
 `hermesc`; no simulator), so this pass is verified via a clean typecheck,
 30/30 tests, and a successful Metro bundle of all 1139 modules (which resolves
 the new route and bundled hero asset) — not by on-device screenshots.
+
+## Running on a physical iOS device (vertical-slice playtest)
+
+Chronicle is a client-only Expo app (SDK 52, no backend). The easiest way to
+play it on a real iPhone is **Expo Go** — no Apple Developer account, no Xcode.
+
+1. Get the code onto your computer (Emergent → "Save to GitHub", then
+   `git clone`), and install Node 20+ and Yarn.
+2. `yarn install`
+3. Install **Expo Go** from the App Store on your iPhone.
+4. `npx expo start`  (add `--tunnel` if the phone and computer aren't on the
+   same Wi‑Fi).
+5. Scan the QR code with the iPhone Camera app → it opens in Expo Go.
+
+First launch seeds a new world into on-device SQLite; progress persists in the
+app sandbox across restarts. All native modules used (expo-sqlite, haptics,
+audio, router, etc.) are in the Expo Go runtime, so no custom dev client is
+required for a playtest.
+
+**Standalone dev build (optional, not needed for Expo Go):** add
+`expo-dev-client` and either `npx expo run:ios` on a Mac with Xcode, or
+`eas build -p ios --profile development` (needs an Expo account + an Apple ID
+for device provisioning).

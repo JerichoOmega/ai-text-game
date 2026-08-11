@@ -10,7 +10,8 @@
       "expo-router",
       "expo-sqlite",
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "expo-audio"
     ],
     "ios": {
       "supportsTablet": false,
