@@ -10,9 +10,9 @@ import { ActionButton } from "@/presentation/components/ActionButton";
 import { HapticManager } from "@/presentation/haptics/HapticManager";
 import { DialogueSystem } from "@/systems/DialogueSystem";
 import { SHOP_CATALOG } from "@/data/shopCatalog";
+import { getShopkeeper } from "@/data/shopkeepers";
+import { portraitForNpc } from "@/presentation/npc/shopkeeperPortraits";
 import type { ShopItem, ShopItemCategory } from "@/domain/types";
-
-const MERCHANT_PORTRAIT = require("../assets/images/merchant-portrait.jpg");
 
 const CATEGORY_ICON: Record<ShopItemCategory, keyof typeof Ionicons.glyphMap> = {
   "Weapon (Melee)": "flash",
@@ -43,14 +43,16 @@ export default function ShopScreen() {
 
   const npc = world && npcId ? world.npcs[npcId] : undefined;
   const settlement = npc && world ? world.settlements[npc.settlementId] : undefined;
+  const shopkeeper = getShopkeeper(npc?.shopkeeperId);
 
   const greeting = useMemo(() => {
+    if (shopkeeper) return shopkeeper.greeting;
     if (!npc || !world) return "Welcome, traveler. Take a look — I've got a few things worth your coin.";
     const line = DialogueSystem.getGreeting(npc, world);
     return line === "..." || line === "Hello, traveler."
       ? "Welcome, traveler. Take a look — I've got a few things worth your coin."
       : line;
-  }, [npc, world]);
+  }, [shopkeeper, npc, world]);
 
   if (!world) {
     return (
@@ -63,8 +65,11 @@ export default function ShopScreen() {
   const gold = world.player.gold;
   const shopName = settlement ? `${settlement.name} Market` : "The Merchant's Table";
   const shopSub = settlement ? `${settlement.type[0]!.toUpperCase()}${settlement.type.slice(1)} of ${settlement.name}` : "Wandering trader";
-  const keeperName = npc?.name ?? "Maren";
-  const keeperRole = npc ? `${npc.name}, ${npc.role[0]!.toUpperCase()}${npc.role.slice(1)}` : "Maren, Village Merchant";
+  const keeperRole = shopkeeper
+    ? `${shopkeeper.name}, ${shopkeeper.shopTitle}`
+    : npc
+    ? `${npc.name}, ${npc.role[0]!.toUpperCase()}${npc.role.slice(1)}`
+    : "Maren, Village Merchant";
 
   const doBuy = async (item: ShopItem) => {
     void HapticManager.medium();
@@ -101,7 +106,7 @@ export default function ShopScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Shopkeeper */}
         <View style={[styles.keeperRow, { borderColor: theme.goldBorder }]}>
-          <Image source={MERCHANT_PORTRAIT} style={[styles.portrait, { borderColor: theme.goldBorder }]} resizeMode="cover" />
+          <Image source={npc ? portraitForNpc(npc) : portraitForNpc({ role: "merchant" })} style={[styles.portrait, { borderColor: theme.goldBorder }]} resizeMode="cover" />
           <View style={styles.keeperText}>
             <Text style={[styles.keeperName, { color: theme.gold, fontFamily: fontFamily.displayBold }]} numberOfLines={2}>
               {keeperRole}

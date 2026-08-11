@@ -12,6 +12,23 @@ dead companion UI. The `companion_joined`/`companion_left` world-event types
 only — nothing dispatches them today. The MVP centers on the player's personal
 journey and on richer NPC interaction (the portrait-dominant dialogue screen).
 
+## Recurring shopkeepers (authored roster, run-selected)
+
+Chronicle ships a canonical roster of **10 authored recurring shopkeepers**
+(`src/data/shopkeepers.ts`) — Marabelle, Eldric, Brogan, Lyra, Zahir, Pip,
+Sister Miriam, Grok, Silas, Tobias. They are a **pool**, not a fixed cast:
+each run deterministically selects a subset from the new persisted
+`WorldState.seed` and assigns them onto the existing merchant/innkeeper NPC
+slots (`NPC.shopkeeperId`), reusing the existing NPC, world-gen, and
+persistence systems (no second system). Selection is stable for the run
+(shops never reroll on visit), reproduces from the seed, and varies between
+seeds. Rarity tiers (common / uncommon / traveling); Tobias and one general
+merchant are always present so every world has a shop. Portraits are the
+supplied authored art (`assets/images/shopkeepers/*.png`), mapped RN-side in
+`shopkeeperPortraits.ts`; the shop/dialogue presentation shows the official
+portrait, name, and specialty for an assigned shopkeeper.
+
+
 
 Written against the 14-phase hardening prompt. Graded honestly: **Done**
 means implemented and internally consistent (verified by manual type-surface

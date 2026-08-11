@@ -9,6 +9,7 @@ import type {
   WorldState,
 } from "@/domain/types";
 import { createId } from "@/utils/id";
+import { assignShopkeepers } from "@/data/shopkeepers";
 
 const START_DATE: GameDate = { year: 212, season: "spring", day: 1 };
 
@@ -40,7 +41,7 @@ function makeNpc(name: string, role: NpcRole, settlementId: string, factionId: s
   };
 }
 
-export function buildSeedWorld(playerName: string): WorldState {
+export function buildSeedWorld(playerName: string, seed: number = Math.floor(Math.random() * 0x7fffffff)): WorldState {
   const kingdomId = createId("kingdom");
   const factionMerchantId = createId("faction");
   const factionWatchId = createId("faction");
@@ -133,9 +134,16 @@ export function buildSeedWorld(playerName: string): WorldState {
     npcs.push(makeNpc(name, role, settlementId, factionForSettlement[settlementId] ?? null));
   });
 
-  // Designate a ruler among the nobles in Eastbridge.
+  // Designate a ruler among the nobles in Eastbridge (before shopkeeper
+  // assignment, which only touches merchant/innkeeper NPCs).
   const ruler = npcs.find((n) => n.settlementId === eastbridgeId && n.role === "noble");
   if (ruler) kingdom.rulerId = ruler.id;
+
+  const settlementsById = Object.fromEntries(settlements.map((s) => [s.id, s]));
+  const npcsById = Object.fromEntries(npcs.map((n) => [n.id, n]));
+  // Deterministically place this run's recurring shopkeepers onto the
+  // merchant/innkeeper slots, keyed off the world seed.
+  const npcsWithShopkeepers = assignShopkeepers(npcsById, settlementsById, seed);
 
   const player: PlayerCharacter = {
     id: createId("player"),
@@ -157,13 +165,14 @@ export function buildSeedWorld(playerName: string): WorldState {
 
   return {
     saveVersion: 1,
+    seed,
     currentDate: START_DATE,
     weather: { current: "clear", daysInCurrentState: 0 },
     player,
     kingdoms: { [kingdom.id]: kingdom },
     settlements: Object.fromEntries(settlements.map((s) => [s.id, s])),
     factions: Object.fromEntries(factions.map((f) => [f.id, f])),
-    npcs: Object.fromEntries(npcs.map((n) => [n.id, n])),
+    npcs: npcsWithShopkeepers,
     quests: {},
     events: [],
     history: [

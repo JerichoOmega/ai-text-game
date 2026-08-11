@@ -1,5 +1,21 @@
 # Chronicle — PRD / Working Memory
 
+## Recurring shopkeepers (2026-06)
+Authored, run-selected shopkeeper roster reusing the existing NPC/persistence/world systems.
+- 10 canonical shopkeepers in `src/data/shopkeepers.ts` (node-safe catalog + deterministic
+  `selectRoster(seed)` / `assignShopkeepers(npcs,settlements,seed)`). Portraits (10 PNGs under
+  `assets/images/shopkeepers/`) mapped in RN-only `src/presentation/npc/shopkeeperPortraits.ts`.
+- Added `WorldState.seed` (persisted via `meta`) + `NPC.shopkeeperId?` (persists free — NPCs are
+  stored as JSON). Seed generated once in `buildSeedWorld`; shopkeepers assigned onto existing
+  merchant/innkeeper slots deterministically and saved. Visiting a shop never rerolls.
+- Rarity tiers (common/uncommon/traveling); Tobias + one general merchant always present. Not every
+  run contains all ten; different seeds → different rosters (verified).
+- `shop.tsx` shows the official portrait + name + specialty + signature greeting via `shopkeeperId`;
+  generic role portrait is the fallback. No companion system introduced.
+- Verified: typecheck 0 errors, 37/37 tests (7 new), Metro bundles 1162 modules (all 10 assets
+  resolve), 10/10 id↔portrait↔role checks. On-device not verifiable (aarch64 vs x86-64 hermesc).
+
+
 ## MVP scope decision (2026-06): Companions DEFERRED (post-launch)
 Deliberate scope reduction for a finished MVP. No companion system, tab,
 route, screen, model, or persistence — and no dead companion UI. Removed the

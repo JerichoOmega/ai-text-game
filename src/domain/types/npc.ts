@@ -67,6 +67,13 @@ export interface NPC {
   /** Positive = player owes NPC; negative = NPC owes player. Gold units. */
   debtToPlayer: number;
   schedule: NpcScheduleSlot[];
+  /**
+   * If set, this NPC is one of the authored recurring shopkeepers (see
+   * src/data/shopkeepers.ts). Assigned deterministically at world creation
+   * from the world seed and persisted; drives the official portrait/identity.
+   * Absent for ordinary generated NPCs.
+   */
+  shopkeeperId?: EntityId;
 }
 
 export interface NpcScheduleSlot {

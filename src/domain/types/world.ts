@@ -41,6 +41,12 @@ export interface PlayerCharacter {
  */
 export interface WorldState {
   saveVersion: number;
+  /**
+   * The run's world seed. Set once at creation and persisted; deterministic
+   * world choices (currently: recurring shopkeeper selection) derive from it,
+   * so the same seed reproduces the same roster and a save reloads identically.
+   */
+  seed: number;
   currentDate: GameDate;
   weather: WeatherState;
   player: PlayerCharacter;

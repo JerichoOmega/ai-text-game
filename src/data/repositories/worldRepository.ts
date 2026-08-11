@@ -52,6 +52,7 @@ export const worldRepository = {
    *  crash mid-save can't corrupt unrelated tables (each row write is its own statement). */
   async saveAll(world: WorldState): Promise<void> {
     await this.savePlayerAndClock(world.player, world.currentDate, world.weather);
+    await setMeta("seed", String(world.seed));
     for (const kingdom of Object.values(world.kingdoms)) {
       await kingdomRepository.upsertKingdom(kingdom);
     }
@@ -78,6 +79,7 @@ export const worldRepository = {
     if (!playerJson || !dateJson) return null;
     // Forward-compatible with pre-weather saves (saveVersion 1): default rather than fail.
     const weatherJson = await getMeta("weather");
+    const seedJson = await getMeta("seed");
 
     const [kingdoms, settlements, factions, npcs, quests, events, history] = await Promise.all([
       kingdomRepository.getAllKingdoms(),
@@ -91,6 +93,10 @@ export const worldRepository = {
 
     return {
       saveVersion: CURRENT_SAVE_VERSION,
+      // Older saves predate the world seed; default to a stable value so the
+      // save still loads. Shopkeeper assignments were already persisted on
+      // the NPC rows, so a missing seed doesn't lose the established roster.
+      seed: seedJson ? Number(seedJson) : 1,
       currentDate: JSON.parse(dateJson) as GameDate,
       weather: weatherJson ? (JSON.parse(weatherJson) as WeatherState) : DEFAULT_WEATHER,
       // Spread defaults first so a save from before Phase (character stats
