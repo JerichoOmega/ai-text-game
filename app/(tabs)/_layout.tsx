@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabs } from "expo-router";
 import { StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/presentation/theme/useTheme";
+import { MusicDirector } from "@/presentation/audio/MusicDirector";
 
 /**
  * The official four-tab structure (Chronicle UI Theme Lock): Journey,
@@ -18,6 +19,18 @@ import { useTheme } from "@/presentation/theme/useTheme";
  */
 export default function TabsLayout() {
   const theme = useTheme();
+
+  // Entering the four-tab gameplay experience starts the default background
+  // music ("The First Page"), which loops and respects the existing
+  // music/master volume + mute state (AudioManager). Leaving gameplay (back
+  // to the main menu, which unmounts this layout) stops it; returning
+  // re-starts it. Requests the semantic cue only — never the file directly.
+  // If the track fails to load, AudioManager logs and returns false; the
+  // game keeps running silently.
+  useEffect(() => {
+    MusicDirector.playExploration();
+    return () => MusicDirector.stop();
+  }, []);
 
   return (
     <Tabs

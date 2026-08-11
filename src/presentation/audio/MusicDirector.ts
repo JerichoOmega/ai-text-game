@@ -26,9 +26,15 @@ export type MusicCue =
   | "weatherStorm"
   | "night";
 
+// "The First Page" (Suno) — the MVP's single generic gameplay track. This is
+// intentionally the ONLY non-null cue: it plays during normal gameplay and
+// loops. All other cues stay null until their own audio milestones. The
+// filename/path is centralized here; screens request the semantic cue.
+const THE_FIRST_PAGE = require("../../../assets/audio/music/exploration/the-first-page.mp3");
+
 const MUSIC_TRACKS: Record<MusicCue, AudioSource | null> = {
   mainMenu: null, // assets/audio/music/menu/main-theme.mp3
-  exploration: null, // assets/audio/music/exploration/*.mp3 (expected: multiple, rotated — see README)
+  exploration: THE_FIRST_PAGE, // assets/audio/music/exploration/the-first-page.mp3
   town: null, // assets/audio/music/settlements/*.mp3
   dungeon: null, // assets/audio/music/dungeons/*.mp3
   combat: null, // assets/audio/music/combat/*.mp3
