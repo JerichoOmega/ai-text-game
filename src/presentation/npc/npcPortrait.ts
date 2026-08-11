@@ -2,14 +2,13 @@ import type { ImageSourcePropType } from "react-native";
 import type { NpcRole } from "@/domain/types";
 
 /**
- * Resolves an NPC to a portrait art reference by role. Chronicle has no
- * per-character portrait assets, so this is a deliberate placeholder
- * scheme: a small set of shared, role-appropriate painted portraits with a
- * villager fallback. It is NOT a character-customization system.
- *
- * The dialogue screen depends only on this resolver returning an
- * ImageSourcePropType, so richer/unique art (or a portrait id stored on the
- * NPC) can be swapped in later without touching the UI.
+ * Generic, role-based portrait fallback — the LAST tier of the unified
+ * portraitForNpc() resolver (see shopkeeperPortraits.ts). Canonical key
+ * NPCs (characterId) and authored shopkeepers (shopkeeperId) resolve to
+ * their own art first; only ordinary generated NPCs reach here and share a
+ * small set of role-appropriate painted portraits with a villager fallback.
+ * This is NOT a character-customization system, and it never produces a
+ * canonical character's face.
  */
 const MERCHANT = require("../../../assets/images/merchant-portrait.jpg");
 const GUARD = require("../../../assets/images/guard-portrait.jpg");

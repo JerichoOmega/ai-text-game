@@ -1,5 +1,30 @@
 # Chronicle — PRD / Working Memory
 
+## Canonical 12 NPCs + unified dialogue (2026-06)
+Completed the NPC character & visual-consistency milestone (separate content pool from shopkeepers).
+- 12 canonical NPCs in `src/data/npcRegistry.ts` (node-safe: identities, emotion→expression aliasing,
+  `selectRecurringRoster(seed)`, `assignRecurringNpcs(npcs,seed)`). RN-only static asset map in
+  `src/presentation/npc/npcAssets.ts` = 12 base portraits + 72 expressions under
+  `assets/characters/npc/`. `NPC.characterId?` added (persists as JSON, separate from `shopkeeperId`).
+- **Bug fixed**: `seedWorld.ts` computed canonical assignment but returned the pre-assignment map, so
+  canonical NPCs never appeared. Now returns `npcsFinal`. Verified: 6–9 canonical NPCs/seed, 0 overlap
+  with shopkeepers, all ids valid, deterministic, JSON round-trip stable.
+- **Single resolver**: `portraitForNpc(npc, emotion)` in `shopkeeperPortraits.ts`, precedence
+  `characterId → shopkeeperId → generic role`. Fallback: mapped expression → neutral → base portrait →
+  generic; never substitutes another character's art, never generates. Deleted dead `NPCPortrait.tsx`
+  (duplicate role-only path).
+- **Portrait-dominant dialogue** `app/npc/[id].tsx`: large portrait (emotion from relationship + topic),
+  greeting + deterministic `DialogueSystem` responses/replies, haptics, a11y labels/live-region. Shop
+  entry for merchants preserved. `shop.tsx` portrait framing aligned to the same visual language;
+  shop mechanics untouched.
+- `DESIGN_SYSTEM.md`: added official "Chronicle NPC Visual Style" section (canonical 12 as style
+  anchors, generated NPCs "same art direction / different characters", shopkeepers distinct pool,
+  expression + portrait-dominant rules, reference-art rule).
+- Verified: typecheck 0 errors, 51/51 tests (14 new, node-safe), Metro resolves 1248 modules + all
+  new assets (fails only at Hermes bytecode: aarch64 vs x86-64 hermesc). On-device rendering NOT
+  verifiable here.
+
+
 ## Recurring shopkeepers (2026-06)
 Authored, run-selected shopkeeper roster reusing the existing NPC/persistence/world systems.
 - 10 canonical shopkeepers in `src/data/shopkeepers.ts` (node-safe catalog + deterministic

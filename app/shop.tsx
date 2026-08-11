@@ -104,17 +104,28 @@ export default function ShopScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Shopkeeper */}
-        <View style={[styles.keeperRow, { borderColor: theme.goldBorder }]}>
-          <Image source={npc ? portraitForNpc(npc) : portraitForNpc({ role: "merchant" })} style={[styles.portrait, { borderColor: theme.goldBorder }]} resizeMode="cover" />
-          <View style={styles.keeperText}>
+        {/* Shopkeeper — same portrait-dominant framing as the dialogue screen */}
+        <View
+          style={[styles.keeperHero, { borderColor: theme.goldBorder }]}
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={keeperRole}
+          testID="shop-keeper-portrait"
+        >
+          <Image
+            source={npc ? portraitForNpc(npc) : portraitForNpc({ role: "merchant" })}
+            style={styles.heroPortrait}
+            resizeMode="cover"
+          />
+          <View style={styles.heroScrim} pointerEvents="none" />
+          <View style={styles.heroPlate}>
             <Text style={[styles.keeperName, { color: theme.gold, fontFamily: fontFamily.displayBold }]} numberOfLines={2}>
               {keeperRole}
             </Text>
-            <View style={[styles.bubble, { backgroundColor: theme.surfaceRaised, borderColor: theme.goldBorder }]}>
-              <Text style={[styles.bubbleText, { color: theme.ink }]}>{greeting}</Text>
-            </View>
           </View>
+        </View>
+        <View style={[styles.bubble, { backgroundColor: theme.surfaceRaised, borderColor: theme.goldBorder }]}>
+          <Text style={[styles.bubbleText, { color: theme.ink }]}>{greeting}</Text>
         </View>
 
         {justBought && (
@@ -226,12 +237,21 @@ const styles = StyleSheet.create({
   goldValue: { fontSize: 18, fontWeight: "800" },
   goldLabel: { fontSize: 10, textTransform: "uppercase", letterSpacing: 1 },
   scroll: { paddingBottom: 24 },
-  keeperRow: { flexDirection: "row", gap: spacing.md, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: spacing.md, marginBottom: spacing.md },
-  portrait: { width: 96, height: 120, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth * 2 },
-  keeperText: { flex: 1 },
-  keeperName: { fontSize: 15, fontWeight: "700", marginBottom: spacing.sm },
-  bubble: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, padding: spacing.md },
-  bubbleText: { fontStyle: "italic", lineHeight: 20, fontSize: 14 },
+  keeperHero: {
+    width: "100%",
+    height: 260,
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    overflow: "hidden",
+    justifyContent: "flex-end",
+    marginBottom: spacing.md,
+  },
+  heroPortrait: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
+  heroScrim: { ...StyleSheet.absoluteFillObject, backgroundColor: "#0A080699" },
+  heroPlate: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
+  keeperName: { fontSize: 18, fontWeight: "700" },
+  bubble: { borderWidth: StyleSheet.hairlineWidth * 2, borderRadius: radii.lg, padding: spacing.lg, marginBottom: spacing.md },
+  bubbleText: { fontStyle: "italic", lineHeight: 24, fontSize: 15 },
   boughtNote: { fontSize: 13, fontWeight: "600", marginBottom: spacing.sm, textAlign: "center" },
   itemRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, borderWidth: StyleSheet.hairlineWidth * 2, borderRadius: radii.md, padding: spacing.md, marginBottom: spacing.sm + 2 },
   itemIconWell: { width: 52, height: 52, borderRadius: radii.sm, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: "center", justifyContent: "center" },

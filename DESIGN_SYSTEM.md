@@ -287,6 +287,101 @@ vibration-motor nuance (expo-haptics maps to Android's generic vibration
 API; it works, but hasn't been felt on real Android hardware — this
 sandbox has no device to verify feel on), and game controller haptics.
 
+## Chronicle NPC Visual Style
+
+This is the **official Chronicle NPC visual standard**. All NPC artwork —
+existing and future — should be evaluated against the 12 canonical
+characters as the style reference. This section governs *visual direction
+only*; it introduces no gameplay mechanics, classes, statistics, or
+abilities, and it must never do so.
+
+### Canonical visual direction
+
+Chronicle NPCs use a **stylized fantasy character-portrait aesthetic**:
+expressive, painterly, polished, readable, and appropriate for a classic
+fantasy RPG. The feeling should evoke the warmth and character-driven charm
+of games like *Fable*, while remaining an original Chronicle visual
+identity. Artwork prioritizes:
+
+- Strong facial identity and silhouettes
+- Expressive eyes and facial expressions
+- Distinctive hairstyles, clothing, accessories, and physical features
+- Fantasy-world clothing and materials
+- Warm, atmospheric fantasy presentation
+- Consistent lighting and rendering language
+- Portrait composition suited to the portrait-dominant dialogue screen
+- Clear readability at mobile scale
+
+### The 12 canonical / key NPCs — the style anchors
+
+The 12 authored NPCs (`src/data/npcRegistry.ts`, art in
+`assets/characters/npc/`) are the **visual style anchors** for Chronicle.
+They establish character proportions, rendering style, facial design
+language, clothing/detail level, color treatment, expression style,
+portrait framing, and overall fantasy aesthetic. They are **reference, not
+templates** — they must not be recolored, reskinned, or copied to produce
+other characters.
+
+### Procedural / ordinary NPCs
+
+Generated NPCs should feel like they belong to the **same world and art
+direction** as the canonical 12, while introducing genuinely new faces:
+new races/ancestries, hairstyles, clothing combinations, ages, physical
+traits, and personalities.
+
+> **Rule: same art direction, different characters.** Never recolor,
+> reskin, or copy a canonical character to create an ordinary NPC.
+
+Today ordinary NPCs use a small set of shared, role-based placeholder
+portraits (`src/presentation/npc/npcPortrait.ts`) — the generic tier of the
+resolver. Future unique generated portraits must follow the direction above;
+the architecture is already ready for them (a per-NPC portrait id would slot
+in without touching screens).
+
+### Shopkeepers — a distinct content pool
+
+The authored shopkeeper roster (`src/data/shopkeepers.ts`, art in
+`assets/images/shopkeepers/`) follows the same Chronicle visual language but
+remains a **separate content pool** with its own authored identities.
+Shopkeepers should feel visually consistent with both the canonical
+characters and ordinary NPCs while keeping their own recognizable faces.
+
+`characterId`, `shopkeeperId`, and ordinary NPC `role` are what decide which
+portrait system is used — the **visual style is fully separate from gameplay
+identity**. All three flow through the single `portraitForNpc(npc, emotion)`
+resolver (`src/presentation/npc/shopkeeperPortraits.ts`), precedence
+`characterId → shopkeeperId → generic role`.
+
+### Expression system
+
+Expressions are **part of a character's identity** and stay consistent with
+the base portrait. Each canonical character ships six expressions
+communicating states such as neutral, happy, concerned, angry, surprised,
+and sad. An expression change must preserve the character's recognizable
+facial structure, hairstyle, clothing, and overall appearance. The resolver
+maps a (possibly loosely-named) dialogue emotion to a real owned expression,
+falling back **mapped expression → that character's neutral → base portrait**
+— and never substitutes another character's art or generates a replacement
+face.
+
+### Portrait-dominant dialogue
+
+NPC portraits are a major part of Chronicle's interaction design. When the
+player speaks with an NPC (`app/npc/[id].tsx`), the portrait occupies most
+of the screen and is the visual focus, above the NPC's current line and a
+small set of deterministic response branches. Future NPC artwork must be
+composed for this presentation: portrait-first composition, face readable at
+mobile scale, expressions clearly visible, minimal environmental detail
+behind the character, and consistent framing between characters.
+
+### Reference-art rule
+
+External artwork may inform *presentation quality and genre conventions
+only*. Chronicle must keep its own characters, names, lore, branding, copy,
+gameplay systems, and visual identity. Never reproduce another game's
+characters, logos, taglines, UI copy, or proprietary identity.
+
+
 ## Accessibility rules
 
 - Every `Pressable` gets `accessibilityRole`, `accessibilityLabel`, and

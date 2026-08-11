@@ -176,7 +176,7 @@ export function buildSeedWorld(playerName: string, seed: number = Math.floor(Mat
     kingdoms: { [kingdom.id]: kingdom },
     settlements: Object.fromEntries(settlements.map((s) => [s.id, s])),
     factions: Object.fromEntries(factions.map((f) => [f.id, f])),
-    npcs: npcsWithShopkeepers,
+    npcs: npcsFinal,
     quests: {},
     events: [],
     history: [
