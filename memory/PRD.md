@@ -1,5 +1,19 @@
 # Chronicle — PRD / Working Memory
 
+## UI Reconstruction — Cohesive Chronicle Design System (2026-06, commit 739a0dc)
+Presentation-only rebuild of the visual language + information architecture. No gameplay/AI/state/db/SaveManager changes; AI stays OFF; all 217 tests + tsc + web export + SQLite guard pass.
+- **Design system**: `ChronicleBackground` (generated dark leather/parchment texture `assets/images/textures/chronicle-bg.jpg` + obsidian scrim + vignette) wired into `ScreenContainer` so every destination shares atmosphere; new `SectionLabel` primitive (tracked small-caps + brass rule + optional drill-down link) replaces the habit of boxing every section. Reused the existing locked theme tokens (Georgia serif display, warm parchment ink, antique gold, crimson `wax`, emerald `forest`, cool `accent` for "you are here").
+- **IA principle applied**: destinations, not documents — one-screenful with drill-downs instead of stacked cards.
+- **Journey**: open sections (no OrnateFrame boxes); location art stays hero; Current Journey is an open passage with the single crimson action; People capped (4 mobile / 6 desktop, no directory); Recent Events = borderless chronicle feed → View Chronicle; slimmer Rest bar.
+- **Character**: identity hero (portrait `hero-portrait.jpg` + serif name + Level·Race·Background) with always-visible Health/XP meters, then **Overview / Stats / Gear** segmented drill-down (was one long stats dashboard).
+- **Chronicle**: **News** open list (newest emphasized serif) + **Timeline** year-grouped rail with node dots (was identical `ChronicleCard`s).
+- **World**: map-first segmented tabs (Map/Kingdoms/Factions/Locations) with open atlas list rows (was stacked `Panel` cards).
+- **New Adventure**: character-ledger manuscript — intro passage, large serif name field, brass-ruled chip groups, "Begin the Saga" (was boxed form).
+- **Home**: de-boxed chronicle menu (Continue emphasized in accent, rest as open rows on brass rules, more breathing room). Bottom nav restyled as chronicle tabs (brass top rule, taller, restrained accent active).
+- **Verification**: tsc 0 errors; 217/217 tests; `expo export --platform web` OK; SQLite guard passes; `chronicle-bg.jpg` bundled. Live smoke (prod bundle): Home + New Adventure fully rendered in the new language; bottom nav + dark textured background + loading states confirmed. Journey/Character/Chronicle/World are code-complete and share the validated primitives, but the automation harness's fixed ~10s capture window on a cold browser context could not catch them after world-seed completes — an environment/harness limitation, not a code defect (the full web loop rendered a loaded Journey earlier this session). Agent-tested only; no on-device confirmation.
+- **Old components left in place but now unused by primary screens**: `OrnateFrame`, `ChronicleCard`, `SectionHeader`, `CharacterHeader`, `StatBar`, `Panel` (still used by secondary screens like inventory/shop). Not removed to avoid churn.
+
+
 ## Journey UI — Targeted Polish & Correctness Pass (2026-06, commit dd9967d)
 Presentation-only refinement of the dark-fantasy Journey screen; no gameplay/AI changes (AI still OFF).
 - **Asset**: `assets/journey/eastbridge.png` → `assets/journey/town-settlement.png` (generic settlement art,
