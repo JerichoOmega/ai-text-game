@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { Tabs } from "expo-router";
 import { StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/presentation/theme/useTheme";
+import { BrassIcon } from "@/presentation/components/BrassIcon";
 import { MusicDirector } from "@/presentation/audio/MusicDirector";
 
 /**
@@ -54,28 +54,28 @@ export default function TabsLayout() {
         name="journey"
         options={{
           title: "Journey",
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass" size={size} color={color} />,
+          tabBarIcon: ({ focused, size }) => <BrassIcon name="journey" size={size ?? 26} active={focused} />,
         }}
       />
       <Tabs.Screen
         name="character"
         options={{
           title: "Character",
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+          tabBarIcon: ({ focused, size }) => <BrassIcon name="character" size={size ?? 26} active={focused} />,
         }}
       />
       <Tabs.Screen
         name="chronicle"
         options={{
           title: "Chronicle",
-          tabBarIcon: ({ color, size }) => <Ionicons name="book" size={size} color={color} />,
+          tabBarIcon: ({ focused, size }) => <BrassIcon name="chronicle" size={size ?? 26} active={focused} />,
         }}
       />
       <Tabs.Screen
         name="world"
         options={{
           title: "World",
-          tabBarIcon: ({ color, size }) => <Ionicons name="globe" size={size} color={color} />,
+          tabBarIcon: ({ focused, size }) => <BrassIcon name="world" size={size ?? 26} active={focused} />,
         }}
       />
     </Tabs>

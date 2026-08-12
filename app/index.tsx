@@ -9,6 +9,7 @@ import { fontFamily, scaledFontSize, typeScale, radii, spacing, iconSize } from 
 import { usePressScale } from "@/presentation/theme/usePressScale";
 import { useReduceMotion } from "@/presentation/theme/useReduceMotion";
 import { HapticManager } from "@/presentation/haptics/HapticManager";
+import { BrassIcon, type BrassIconName } from "@/presentation/components/BrassIcon";
 import { routes } from "@/presentation/navigation/routes";
 
 const HERO = require("../assets/images/main-menu-hero.jpg");
@@ -16,6 +17,7 @@ const HERO = require("../assets/images/main-menu-hero.jpg");
 interface MenuItem {
   key: string;
   icon: keyof typeof Ionicons.glyphMap;
+  brass?: BrassIconName;
   title: string;
   subtitle: string;
   route?: string;
@@ -82,13 +84,13 @@ export default function MainMenuScreen() {
     : "Your saga awaits";
 
   const items: MenuItem[] = [
-    { key: "continue", icon: "compass", title: "Continue", subtitle: savedLabel, route: routes.journey, highlight: true },
+    { key: "continue", icon: "compass", brass: "journey", title: "Continue", subtitle: savedLabel, route: routes.journey, highlight: true },
     { key: "new", icon: "sparkles", title: "New Adventure", subtitle: "Begin a fresh saga", route: routes.newAdventure },
-    { key: "chronicle", icon: "book", title: "Chronicle", subtitle: "World news & history", route: routes.chronicle },
-    { key: "characters", icon: "person", title: "Characters", subtitle: "Your hero & progress", route: routes.character },
-    { key: "quests", icon: "reader", title: "Quest Log", subtitle: "Active quests & objectives", route: routes.quests },
+    { key: "chronicle", icon: "book", brass: "chronicle", title: "Chronicle", subtitle: "World news & history", route: routes.chronicle },
+    { key: "characters", icon: "person", brass: "character", title: "Characters", subtitle: "Your hero & progress", route: routes.character },
+    { key: "quests", icon: "reader", brass: "quest", title: "Quest Log", subtitle: "Active quests & objectives", route: routes.quests },
     { key: "inventory", icon: "bag", title: "Inventory", subtitle: "Coming soon", disabled: true },
-    { key: "world", icon: "globe", title: "World", subtitle: "Map, kingdoms & factions", route: routes.world },
+    { key: "world", icon: "globe", brass: "world", title: "World", subtitle: "Map, kingdoms & factions", route: routes.world },
   ];
 
   return (
@@ -202,7 +204,11 @@ function MenuButton({ item, theme, showDivider, onPress }: { item: MenuItem; the
         ]}
       >
         <View style={[styles.iconWell, { borderColor: highlight ? theme.accent : theme.goldBorder }]}>
-          <Ionicons name={item.icon} size={iconSize.standard} color={iconColor} />
+          {item.brass ? (
+            <BrassIcon name={item.brass} size={26} />
+          ) : (
+            <Ionicons name={item.icon} size={iconSize.standard} color={iconColor} />
+          )}
         </View>
         <View style={styles.menuText}>
           <Text

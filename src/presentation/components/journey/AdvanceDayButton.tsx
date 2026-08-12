@@ -1,10 +1,10 @@
 import React from "react";
 import { Animated, Pressable, View, Text, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/useTheme";
 import { fontFamily, radii, scaledFontSize, spacing, typeScale } from "../../theme/theme";
 import { usePressScale } from "../../theme/usePressScale";
 import { HapticManager } from "../../haptics/HapticManager";
+import { BrassIcon } from "../BrassIcon";
 
 interface AdvanceDayButtonProps {
   onPress: () => void;
@@ -39,7 +39,7 @@ export function AdvanceDayButton({ onPress }: AdvanceDayButtonProps) {
         ]}
       >
         <View style={[styles.iconWrap, { borderColor: theme.gold }]}>
-          <Ionicons name="hourglass-outline" size={18} color={theme.gold} />
+          <BrassIcon name="rest" size={20} />
         </View>
         <View>
           <Text style={[styles.label, { color: theme.ink, fontFamily: fontFamily.displayBold, fontSize: scaledFontSize(typeScale.body) }]}>
