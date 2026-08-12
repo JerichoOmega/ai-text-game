@@ -47,10 +47,13 @@ export default function JourneyScreen() {
 
   const recentEvents = useMemo(() => {
     if (!world) return [];
-    return [...world.history]
-      .sort((a, b) => b.year - a.year)
+    // Only `year` is authoritative temporal data; tie-break by insertion index
+    // (later-appended = newer) for a deterministic newest-first feed.
+    return world.history
+      .map((e, index) => ({ e, index }))
+      .sort((a, b) => b.e.year - a.e.year || b.index - a.index)
       .slice(0, 3)
-      .map((e) => ({ id: e.id, headline: e.headline, category: e.category, year: e.year }));
+      .map(({ e }) => ({ id: e.id, headline: e.headline, category: e.category, year: e.year }));
   }, [world]);
 
   const activeQuest = useMemo(() => {
@@ -82,17 +85,36 @@ export default function JourneyScreen() {
     }
   })();
 
+  const onJourneyAction = () => {
+    if (activeQuest) {
+      const a = resolveQuestAffordance(activeQuest, world);
+      // "Speak with X" opens that NPC directly when they're here; every other
+      // affordance (travel / deliver / combat / review) lives on the quest screen.
+      if (a.kind === "talk" && a.npcHere) {
+        router.push(routes.npc(a.npcId));
+        return;
+      }
+    }
+    router.push(routes.quests);
+  };
+
   const currentJourney = activeQuest ? (
     <CurrentJourney
       title={activeQuest.title}
       summary={activeQuest.contextSummary}
       objectives={activeQuest.objectives.map((o) => ({ id: o.id, label: o.label, complete: o.complete }))}
       actionLabel={actionLabel}
-      onPress={() => router.push(routes.quests)}
+      onPress={onJourneyAction}
     />
   ) : null;
 
-  const people = <PeopleSection npcs={npcsHere} onSelect={(id) => router.push(routes.npc(id))} limit={99} />;
+  const people = (
+    <PeopleSection
+      npcs={npcsHere}
+      onSelect={(id) => router.push(routes.npc(id))}
+      limit={6}
+    />
+  );
   const events = <RecentEvents events={recentEvents} onViewAll={() => router.push(routes.chronicle)} />;
 
   return (

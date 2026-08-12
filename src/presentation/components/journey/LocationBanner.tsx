@@ -5,7 +5,7 @@ import { useTheme } from "../../theme/useTheme";
 import { fontFamily, radii, scaledFontSize, spacing, typeScale } from "../../theme/theme";
 import { JournalTriggerButton } from "../JournalTriggerButton";
 
-const EASTBRIDGE = require("../../../../assets/journey/eastbridge.png");
+const SETTLEMENT_ART = require("../../../../assets/journey/town-settlement.png");
 
 interface LocationBannerProps {
   locationName: string;
@@ -29,7 +29,7 @@ export function LocationBanner(props: LocationBannerProps) {
   const theme = useTheme();
   return (
     <View style={[styles.frame, { width: Math.min(props.imageWidth, 760), borderColor: theme.goldBorder, height: props.height }]}>
-      <Image source={EASTBRIDGE} style={styles.bgImage} resizeMode="cover" />
+      <Image source={SETTLEMENT_ART} style={styles.bgImage} resizeMode="cover" />
       <View style={[styles.scrim, styles.scrimTop]} />
       <View style={[styles.scrim, styles.scrimBottom]} />
 

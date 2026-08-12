@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/useTheme";
 import { fontFamily, radii, scaledFontSize, spacing, typeScale, eyebrowStyle, historyCategoryColor } from "../../theme/theme";
-import { OrnateFrame } from "./OrnateFrame";
 
 interface EventEntry {
   id: string;
@@ -36,7 +35,7 @@ export function RecentEvents({ events, onViewAll }: RecentEventsProps) {
   return (
     <View>
       <Text style={[eyebrowStyle, { color: theme.gold, marginBottom: spacing.sm }]}>Recent Events</Text>
-      <OrnateFrame>
+      <View style={[styles.feed, { borderLeftColor: theme.goldBorder }]}>
         {events.length === 0 ? (
           <Text style={[styles.empty, { color: theme.inkMuted }]}>Nothing chronicled yet.</Text>
         ) : (
@@ -75,12 +74,13 @@ export function RecentEvents({ events, onViewAll }: RecentEventsProps) {
         >
           View Chronicle ›
         </Text>
-      </OrnateFrame>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  feed: { borderLeftWidth: StyleSheet.hairlineWidth, paddingLeft: spacing.md },
   empty: { fontStyle: "italic" },
   row: { flexDirection: "row", gap: spacing.md },
   sigil: { width: 30, height: 30, borderRadius: radii.sm, borderWidth: 1, alignItems: "center", justifyContent: "center", marginTop: 2 },
