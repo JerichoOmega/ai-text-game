@@ -9,10 +9,17 @@ talks to this gateway over HTTPS through the shared wire contract in
 Expo client -> RemoteProvider -> (HTTPS) -> AI Gateway -> provider adapter -> model
 ```
 
-## Status (Phase 3C-1)
-Infrastructure only. No real provider is wired: the gateway uses
-`NullGatewayProvider`, so every request returns `unconfigured` and the client
-falls back to deterministic gameplay. **No API key is present or committed.**
+## Status (Phase 3C-3)
+A real external-AI adapter now exists behind the gateway, but it stays **OFF by
+default**. Provider selection is server-side via `createProvider(config)`:
+
+- `AI_PROVIDER_MODE=null` (default) → `NullGatewayProvider` → `unconfigured`, deterministic game.
+- `AI_PROVIDER_MODE=real` **and** `AI_PROVIDER_API_KEY` present → `OpenAIGatewayProvider`.
+  Without a key, `real` safely falls back to `null`.
+- `AI_PROVIDER_MODE=mock` → development echo only.
+
+The Expo client never chooses the provider and never holds a key. **No API key
+is present or committed.**
 
 ## Security pipeline (server/gateway.ts)
 `auth -> rate limit -> request validation -> prompt serialize -> provider (hard deadline) -> output validation -> response`
@@ -33,8 +40,18 @@ falls back to deterministic gameplay. **No API key is present or committed.**
 
 ## Configuration
 See `.env.example`. All values are non-secret prototype defaults. A real model
-key would be provided at runtime via `PROVIDER_API_KEY` (never committed) and
-consumed only by a future concrete `GatewayProvider` adapter.
+key would be provided at runtime via `AI_PROVIDER_API_KEY` (never committed) and
+consumed only by the server-side `OpenAIGatewayProvider` adapter.
+
+Real-provider variables (all server-side; never exposed to the client):
+
+- `AI_PROVIDER_MODE` — `null` (default) | `mock` | `real`
+- `AI_PROVIDER_API_KEY` — secret; leave empty; supplied only at runtime
+- `AI_PROVIDER_MODEL` — non-secret model id (default `gpt-4o-mini`)
+- `AI_PROVIDER_BASE_URL` — non-secret base url (default `https://api.openai.com/v1`)
+
+The adapter reads the key only from the server env, sends it solely in the
+outbound `Authorization` header, and never logs or surfaces it in errors.
 
 ## Run (optional)
 ```

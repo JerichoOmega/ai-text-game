@@ -22,6 +22,12 @@ export interface GatewayConfig {
   maxNarrativeLength: number;
   maxDialogueLineLength: number;
   rateLimit: { windowMs: number; maxRequestsPerWindow: number };
+  /** Server-side provider selection. Default "null" keeps AI OFF. */
+  providerMode: "null" | "mock" | "real";
+  /** Non-secret model identifier for the real adapter. */
+  providerModel: string;
+  /** Non-secret provider base URL for the real adapter. */
+  providerBaseUrl: string;
   /** True only if a provider key is present in the env. Never stores the key. */
   providerConfigured: boolean;
 }
@@ -58,7 +64,14 @@ export function loadGatewayConfig(env: Env = process.env): GatewayConfig {
       windowMs: num(env, "GATEWAY_RATE_WINDOW_MS", 60000),
       maxRequestsPerWindow: num(env, "GATEWAY_RATE_MAX", 30),
     },
+    providerMode: parseMode(env.AI_PROVIDER_MODE),
+    providerModel: env.AI_PROVIDER_MODEL ?? "gpt-4o-mini",
+    providerBaseUrl: env.AI_PROVIDER_BASE_URL ?? "https://api.openai.com/v1",
     // Presence check only. The key value is never read into config or logged.
-    providerConfigured: !!(env.PROVIDER_API_KEY && env.PROVIDER_API_KEY.length > 0),
+    providerConfigured: !!(env.AI_PROVIDER_API_KEY && env.AI_PROVIDER_API_KEY.length > 0),
   };
+}
+
+function parseMode(raw: string | undefined): "null" | "mock" | "real" {
+  return raw === "mock" || raw === "real" ? raw : "null";
 }
