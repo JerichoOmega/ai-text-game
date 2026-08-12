@@ -365,3 +365,20 @@ required for a playtest.
 `expo-dev-client` and either `npx expo run:ios` on a Mac with Xcode, or
 `eas build -p ios --profile development` (needs an Expo account + an Apple ID
 for device provisioning).
+
+## Running on Expo Web (browser dev preview)
+
+Chronicle now runs on Expo Web in addition to native iOS/Android.
+
+```bash
+yarn install
+npx expo start --web    # opens localhost:8081
+```
+
+Persistence is platform-split behind one interface:
+- **iOS / Android:** `src/data/db.ts` → real `expo-sqlite`.
+- **Web:** `src/data/db.web.ts` → a localStorage-backed adapter with the same
+  `getDb()`/`resetDb()` API (Metro auto-selects it via the `.web.ts` extension).
+
+Web saves live in the browser's localStorage (per-browser); native saves live
+in on-device SQLite. The game logic is identical on both.

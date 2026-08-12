@@ -167,3 +167,17 @@ Small text-first inventory that makes gear/shop purchases matter — reuses the 
   slot-swap/combat-integration/invalid-op/determinism/persistence-shape/no-mutation); Metro resolves 1258
   modules (Hermes still blocked by aarch64/x86-64). On-device UI NOT verified (no simulator/browser target).
 - Sweeps clean: one effectiveStats, one equipmentBonus, one equip/unequip, no competing inventory system.
+
+## Expo Web compatibility — SQLite platform adapter (2026-06)
+Fixed "Cannot find native module 'ExpoSQLite'" on Expo Web without touching native or gameplay.
+- Root cause: `expo-sqlite`'s native module doesn't exist in the browser; `src/data/db.ts` imported it unconditionally.
+- Fix: added `src/data/db.web.ts` — a localStorage-backed adapter exposing the identical `getDb()`/`resetDb()`
+  surface (`execAsync`/`runAsync`/`getFirstAsync`/`getAllAsync`) the repositories use. Metro platform
+  resolution picks `db.web.ts` on web and keeps `db.ts` (real expo-sqlite) on iOS/Android — `db.ts` unchanged.
+  No repository/system/gameplay code changed; single `getDb()` seam.
+- It is NOT a SQL engine: it interprets only the fixed statement shapes the repos issue (meta upserts +
+  `SELECT id,data FROM <table>` with simple WHERE/ORDER BY/LIMIT). It is the web sibling of the SQLite schema.
+- Added web runtime deps via `expo install`: react-dom, react-native-web, @expo/metro-runtime.
+- Verified: tsc 0 errors; 89/89 tests; `expo export --platform web` bundles 1002 modules; the web bundle
+  contains the adapter and ZERO references to `ExpoSQLite`/`openDatabaseAsync` (native module never loaded on web).
+- Native iOS/Android path is unchanged and still the source of truth for real SQLite persistence.
