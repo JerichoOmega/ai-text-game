@@ -27,7 +27,14 @@ export function SectionLabel({ label, actionLabel, onAction, tone = "bronze" }: 
       <Text style={[eyebrowStyle, { color }]} allowFontScaling maxFontSizeMultiplier={1.4}>
         {label}
       </Text>
-      <View style={[styles.rule, { backgroundColor: theme.goldBorder }]} />
+      {/* Manuscript flourish: ──── ✦ ──── — a restrained brass diamond punctuating the section transition. */}
+      <View style={styles.ruleWrap}>
+        <View style={[styles.rule, { backgroundColor: theme.goldBorder }]} />
+        <View style={styles.ornament}>
+          <View style={[styles.diamond, { backgroundColor: theme.gold }]} />
+        </View>
+        <View style={[styles.rule, { backgroundColor: theme.goldBorder }]} />
+      </View>
       {actionLabel && onAction ? (
         <Pressable onPress={onAction} hitSlop={8} accessibilityRole="button" accessibilityLabel={actionLabel}>
           <Text style={[styles.action, { color: theme.gold }]}>{actionLabel} ›</Text>
@@ -39,6 +46,9 @@ export function SectionLabel({ label, actionLabel, onAction, tone = "bronze" }: 
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginBottom: spacing.md },
+  ruleWrap: { flex: 1, flexDirection: "row", alignItems: "center", gap: spacing.sm },
   rule: { flex: 1, height: StyleSheet.hairlineWidth, opacity: 0.7 },
+  ornament: { alignItems: "center", justifyContent: "center", width: 8, height: 8 },
+  diamond: { width: 5, height: 5, transform: [{ rotate: "45deg" }], opacity: 0.8 },
   action: { fontSize: 12, fontWeight: "700", letterSpacing: 0.5 },
 });
