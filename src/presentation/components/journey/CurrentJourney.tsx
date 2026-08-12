@@ -43,7 +43,7 @@ export function CurrentJourney({ title, summary, objectives, actionLabel, onPres
           {title}
         </Text>
       </View>
-      <Text style={[styles.summary, { color: theme.inkMuted, fontSize: scaledFontSize(typeScale.caption) }]} numberOfLines={3}>
+      <Text style={[styles.summary, { color: theme.inkMuted, fontFamily: fontFamily.display, fontSize: scaledFontSize(typeScale.caption) }]} numberOfLines={3}>
         {summary}
       </Text>
 

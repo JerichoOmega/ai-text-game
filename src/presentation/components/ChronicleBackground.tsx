@@ -16,11 +16,14 @@ export function ChronicleBackground() {
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background }]} />
       <Image source={BG} style={styles.texture} resizeMode="cover" />
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, opacity: 0.62 }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, opacity: 0.5 }]} />
+      {/* A faint warm page-glow near the top so screens read as an aged leaf, not flat black. */}
+      <View style={[styles.warmBand, { backgroundColor: theme.surface }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   texture: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%", opacity: 0.9 },
+  warmBand: { position: "absolute", top: 0, left: 0, right: 0, height: "34%", opacity: 0.14 },
 });

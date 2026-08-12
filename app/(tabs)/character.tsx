@@ -5,6 +5,7 @@ import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
 import { fontFamily, scaledFontSize, typeScale, radii, spacing, iconSize } from "@/presentation/theme/theme";
 import { SectionLabel } from "@/presentation/components/SectionLabel";
+import { PageTabs } from "@/presentation/components/PageTabs";
 import { JournalTriggerButton } from "@/presentation/components/JournalTriggerButton";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
 import { capitalize } from "@/utils/format";
@@ -84,24 +85,8 @@ export default function CharacterScreen() {
           />
         </View>
 
-        {/* Drill-down: keep secondary detail behind tabs instead of stacking it all. */}
-        <View style={[styles.segment, { borderColor: theme.goldBorder }]} testID="character-tabs">
-          {TABS.map((t) => {
-            const active = t.key === tab;
-            return (
-              <Pressable
-                key={t.key}
-                onPress={() => setTab(t.key)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                testID={`character-tab-${t.key}`}
-                style={[styles.segmentBtn, active && { backgroundColor: theme.surfaceRaised }]}
-              >
-                <Text style={[styles.segmentLabel, { color: active ? theme.gold : theme.inkMuted }]}>{t.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {/* Drill-down: keep secondary detail behind book-page tabs. */}
+        <PageTabs tabs={TABS} active={tab} onChange={setTab} testIDPrefix="character-tab" containerTestID="character-tabs" />
 
         {tab === "overview" && (
           <View>
@@ -214,7 +199,7 @@ function AbilityRow({ name, description, theme, testID }: { name: string; descri
   return (
     <View style={styles.abilityRow} testID={testID}>
       <Text style={{ color: theme.gold, fontWeight: "700", fontFamily: fontFamily.display }}>{name}</Text>
-      <Text style={{ color: theme.inkMuted, fontSize: 13, marginTop: 2, lineHeight: 18 }}>{description}</Text>
+      <Text style={{ color: theme.inkMuted, fontSize: 13, marginTop: 2, lineHeight: 19, fontFamily: fontFamily.display, fontStyle: "italic" }}>{description}</Text>
     </View>
   );
 }

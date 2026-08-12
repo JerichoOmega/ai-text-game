@@ -5,6 +5,7 @@ import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
 import { fontFamily, scaledFontSize, typeScale, iconSize, radii, spacing } from "@/presentation/theme/theme";
 import { JournalTriggerButton } from "@/presentation/components/JournalTriggerButton";
+import { PageTabs } from "@/presentation/components/PageTabs";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
 import type { Settlement } from "@/domain/types";
 
@@ -64,23 +65,7 @@ export default function WorldScreen() {
         <JournalTriggerButton />
       </View>
 
-      <View style={[styles.segment, { borderColor: theme.goldBorder }]} testID="world-tab-row">
-        {TABS.map((t) => {
-          const active = t.key === tab;
-          return (
-            <Pressable
-              key={t.key}
-              onPress={() => setTab(t.key)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: active }}
-              testID={`world-tab-${t.key}`}
-              style={[styles.segmentBtn, active && { backgroundColor: theme.surfaceRaised }]}
-            >
-              <Text style={[styles.segmentLabel, { color: active ? theme.gold : theme.inkMuted }]}>{t.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <PageTabs tabs={TABS} active={tab} onChange={setTab} testIDPrefix="world-tab" containerTestID="world-tab-row" />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {tab === "map" && (

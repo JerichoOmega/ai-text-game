@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     backgroundColor: "rgba(0,0,0,0.22)",
   },
-  bubbleText: { fontStyle: "italic", lineHeight: 23 },
+  bubbleText: { fontStyle: "italic", lineHeight: 23, fontFamily: fontFamily.display },
   responses: { padding: spacing.lg, gap: spacing.sm + 2 },
   responseRow: {
     flexDirection: "row",

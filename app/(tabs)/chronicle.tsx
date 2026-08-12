@@ -5,6 +5,7 @@ import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
 import { fontFamily, scaledFontSize, typeScale, radii, spacing, historyCategoryColor } from "@/presentation/theme/theme";
 import { JournalTriggerButton } from "@/presentation/components/JournalTriggerButton";
+import { PageTabs } from "@/presentation/components/PageTabs";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
 
 type ChronicleTab = "news" | "timeline";
@@ -56,23 +57,12 @@ export default function ChronicleScreen() {
         <JournalTriggerButton />
       </View>
 
-      <View style={[styles.segment, { borderColor: theme.goldBorder }]}>
-        {(["news", "timeline"] as const).map((t) => {
-          const active = tab === t;
-          return (
-            <Pressable
-              key={t}
-              onPress={() => setTab(t)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: active }}
-              testID={`chronicle-tab-${t}`}
-              style={[styles.segmentBtn, active && { backgroundColor: theme.surfaceRaised }]}
-            >
-              <Text style={[styles.segmentLabel, { color: active ? theme.gold : theme.inkMuted }]}>{t === "news" ? "News" : "Timeline"}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <PageTabs
+        tabs={[{ key: "news", label: "News" }, { key: "timeline", label: "Timeline" }]}
+        active={tab}
+        onChange={setTab}
+        testIDPrefix="chronicle-tab"
+      />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {tab === "news" &&
@@ -99,7 +89,7 @@ export default function ChronicleScreen() {
                         styles.headline,
                         {
                           color: latest ? theme.ink : theme.inkMuted,
-                          fontFamily: latest ? fontFamily.display : fontFamily.body,
+                          fontFamily: latest ? fontFamily.displayBold : fontFamily.display,
                           fontSize: scaledFontSize(latest ? typeScale.title : typeScale.body),
                         },
                       ]}
@@ -158,5 +148,5 @@ const styles = StyleSheet.create({
   rail: { borderLeftWidth: StyleSheet.hairlineWidth, paddingLeft: spacing.lg, marginLeft: spacing.sm },
   railRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm, paddingVertical: spacing.sm },
   node: { width: 9, height: 9, borderRadius: 5, borderWidth: 2, marginTop: 5, marginLeft: -(spacing.lg + 4) },
-  railHeadline: { flex: 1, lineHeight: 20 },
+  railHeadline: { flex: 1, lineHeight: 21, fontFamily: fontFamily.display },
 });
