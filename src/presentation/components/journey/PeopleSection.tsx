@@ -20,7 +20,7 @@ export function PeopleSection({ npcs, onSelect, limit = 6 }: PeopleSectionProps)
 
   return (
     <View>
-      <SectionLabel label="People Around You" />
+      <SectionLabel label="People You Encounter" />
       {shown.length === 0 ? (
         <Text style={[styles.empty, { color: theme.inkMuted, fontSize: scaledFontSize(typeScale.caption) }]}>
           No one else is here right now.

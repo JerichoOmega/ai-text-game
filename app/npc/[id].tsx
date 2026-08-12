@@ -152,7 +152,7 @@ export default function NpcDialogueScreen() {
         </Text>
       </View>
 
-      {/* Player choices — compact interface rows */}
+      {/* Player choices — printed manuscript lines, not boxed buttons */}
       <ScrollView contentContainerStyle={styles.responses} showsVerticalScrollIndicator={false}>
         {responses.map((r) => (
           <Pressable
@@ -161,28 +161,23 @@ export default function NpcDialogueScreen() {
             accessibilityRole="button"
             accessibilityLabel={r.label}
             testID={`npc-response-${r.topic}`}
-            style={({ pressed }) => [
-              styles.responseRow,
-              {
-                backgroundColor: r.topic === "leave" ? theme.panel : theme.surface,
-                borderColor: theme.goldBorder,
-                opacity: pressed ? 0.85 : 1,
-              },
-            ]}
+            style={({ pressed }) => [styles.responseRow, { borderBottomColor: theme.goldBorder, opacity: pressed ? 0.55 : 1 }]}
           >
-            <Ionicons
-              name={r.topic === "shop" ? "cart-outline" : r.topic === "leave" ? "exit-outline" : "chatbubble-ellipses-outline"}
-              size={iconSize.inline}
-              color={theme.bronze}
-            />
             <Text
-              style={[styles.responseText, { color: theme.ink, fontSize: scaledFontSize(typeScale.body) }]}
+              style={[
+                styles.responseText,
+                { color: r.topic === "leave" ? theme.inkMuted : theme.ink, fontSize: scaledFontSize(typeScale.body) },
+              ]}
               allowFontScaling
               maxFontSizeMultiplier={1.5}
             >
               {r.label}
             </Text>
-            <Ionicons name="chevron-forward" size={iconSize.inline} color={theme.inkMuted} />
+            {r.topic === "leave" ? (
+              <Ionicons name="arrow-forward" size={iconSize.inline} color={theme.bronze} />
+            ) : (
+              <Text style={[styles.marker, { color: theme.bronze }]}>·</Text>
+            )}
           </Pressable>
         ))}
       </ScrollView>
@@ -232,16 +227,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.22)",
   },
   bubbleText: { fontStyle: "italic", lineHeight: 23, fontFamily: fontFamily.display },
-  responses: { padding: spacing.lg, gap: spacing.sm + 2 },
+  responses: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.lg },
   responseRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    minHeight: 48,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
+    minHeight: 44,
     paddingVertical: spacing.sm + 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  responseText: { flex: 1, fontWeight: "600" },
+  responseText: { flex: 1, fontFamily: fontFamily.display },
+  marker: { fontSize: 20, fontWeight: "700", opacity: 0.7 },
 });

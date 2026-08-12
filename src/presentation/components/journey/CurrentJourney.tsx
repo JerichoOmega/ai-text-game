@@ -32,7 +32,7 @@ export function CurrentJourney({ title, summary, objectives, actionLabel, onPres
 
   return (
     <View>
-      <SectionLabel label="Current Journey" tone="gold" />
+      <SectionLabel label="Current Chapter" tone="gold" />
 
       <View style={styles.titleRow}>
         <Ionicons name="ribbon" size={18} color={theme.wax} style={styles.crest} />
@@ -56,6 +56,7 @@ export function CurrentJourney({ title, summary, objectives, actionLabel, onPres
         </Text>
       </View>
 
+      {objectives.length > 0 ? <Text style={[styles.objHead, { color: theme.bronze }]}>OBJECTIVE</Text> : null}
       {objectives.map((o) => (
         <View key={o.id} style={styles.objRow}>
           <Ionicons name={o.complete ? "checkmark-circle" : "ellipse-outline"} size={15} color={o.complete ? theme.forest : theme.inkMuted} />
@@ -93,6 +94,7 @@ const styles = StyleSheet.create({
   track: { flex: 1, height: 3, borderRadius: 2, overflow: "hidden" },
   fill: { height: "100%", borderRadius: 2 },
   progressLabel: { letterSpacing: 1, fontWeight: "700" },
+  objHead: { fontSize: 11, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: "700", marginTop: spacing.md },
   objRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: spacing.sm },
   objLabel: { flexShrink: 1, lineHeight: 18 },
   action: {
@@ -100,8 +102,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    minHeight: 48,
-    marginTop: spacing.lg,
+    minHeight: 44,
+    marginTop: spacing.md,
     borderRadius: radii.sm,
     borderWidth: StyleSheet.hairlineWidth,
   },
