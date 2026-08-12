@@ -62,7 +62,7 @@ interface WorldStore {
   buyItem: (itemId: string) => Promise<boolean>;
   equipItem: (itemId: string) => Promise<void>;
   unequipItem: (itemId: string) => Promise<void>;
-  talkTo: (npcId: string) => void;
+  talkTo: (npcId: string) => Promise<void>;
   pushLog: (line: string) => void;
   saveNow: () => Promise<void>;
 }
@@ -407,43 +407,58 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
 
 
   /**
-   * not the same bug. advanceTime's bug was "mutate now, persist later,
-   * and if persist fails the mutation already happened." talkTo never
-   * calls SaveManager at all — it mutates `manager` in memory and updates
-   * the UI, and the NPC memory it wrote only reaches disk on the NEXT
-   * action that does persist (advanceTime or saveNow). That's a real but
-   * DIFFERENT characteristic: no risk of manager-ahead-of-disk from a
-   * failed save (there's no save attempt to fail), but a real risk of
-   * losing an in-memory-only conversation if the app is killed before the
-   * next autosave. Fixing that would mean adding persistence where none
-   * exists today — a behavior change, not a consistency fix — which is
-   * out of scope for this pass. Flagged here so it doesn't get missed.
+   * Records a conversation in the NPC's memory (which recomputes their
+   * relationship toward the player) and seats the greeting in the story log.
+   *
+   * The memory/relationship write now goes through the SAME transactional
+   * boundary as every other authoritative world mutation
+   * (runTransactionalWorldUpdate -> SaveManager.save): it runs on a
+   * disposable clone and only becomes authoritative once the save has
+   * succeeded. Previously it mutated `manager` directly and never persisted,
+   * so a conversation could be lost if the app closed before the next
+   * autosave, and `manager` could drift ahead of disk. Now a failed save
+   * leaves the authoritative world (and disk) byte-for-byte unchanged.
+   *
+   * The greeting itself is display-only and reflects the pre-conversation
+   * state (exactly as before), so it is computed outside the transaction.
+   * The dialogue screen shows the greeting from its own local state, so the
+   * on-screen conversation is unchanged regardless of the save outcome.
    */
-  talkTo: (npcId: string) => {
+  talkTo: async (npcId: string) => {
     const { manager, world } = get();
     if (!manager || !world) return;
-    try {
-      const npc = manager.getNpc(npcId);
-      if (!npc) return;
 
-      const line = DialogueSystem.getGreeting(npc, world);
+    const npc = manager.getNpc(npcId);
+    if (!npc) return;
 
-      NPCMemorySystem.remember(manager, npcId, {
-        type: "conversation",
-        summary: `Spoke with the player.`,
-        timestamp: world.currentDate,
-        sentiment: 2,
-      });
+    const line = DialogueSystem.getGreeting(npc, world);
+    const npcName = npc.name;
 
-      set((state) => ({
-        world: manager.getWorld(),
-        storyLog: [...state.storyLog, `${npc.name}: "${line}"`],
-      }));
-    } catch (err) {
-      // Synchronous, but still guarded: a bad NPC memory write shouldn't
-      // take down the screen the player is looking at.
-      Logger.error("useWorldStore", `talkTo("${npcId}") failed`, err);
+    const outcome = await runTransactionalWorldUpdate(
+      manager,
+      async (candidate) => {
+        NPCMemorySystem.remember(candidate, npcId, {
+          type: "conversation",
+          summary: `Spoke with the player.`,
+          timestamp: world.currentDate,
+          sentiment: 2,
+        });
+      },
+      (w) => SaveManager.save(w)
+    );
+
+    if (!outcome.committed) {
+      Logger.error("useWorldStore", `talkTo("${npcId}") failed at "${outcome.stage}" stage`, outcome.error);
+      set({ lastError: "Couldn't save the conversation. Nothing changed." });
+      return;
     }
+
+    set((state) => ({
+      world: manager.getWorld(),
+      storyLog: [...state.storyLog, `${npcName}: "${line}"`],
+      lastSavedAt: new Date(),
+      lastError: null,
+    }));
   },
 
   pushLog: (line: string) => set((state) => ({ storyLog: [...state.storyLog, line] })),
