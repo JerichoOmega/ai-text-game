@@ -16,6 +16,13 @@ export interface EventContext {
 
 export interface DispatchInput {
   type: WorldEventType;
+  /**
+   * Optional pre-assigned event id. The world simulation supplies a
+   * deterministic id here (see simulationEventId) so a reproduced simulation
+   * mints identical event ids; all other callers omit it and EventEngine
+   * falls back to a random createId.
+   */
+  id?: EntityId;
   timestamp: GameDate;
   description: string;
   affectedEntityIds: EntityId[];

@@ -1,5 +1,4 @@
 import type { HistoryCategory, HistoryEntry, WorldEvent, WorldEventType } from "@/domain/types";
-import { createId } from "@/utils/id";
 import type { WorldStateManager } from "./WorldStateManager";
 
 /** Which event types are chronicle-worthy, and under what category. Not every
@@ -48,7 +47,9 @@ export const HistoryLog = {
     if (!category) return null;
 
     const entry: HistoryEntry = {
-      id: createId("hist"),
+      // 1:1 with its source event, so a deterministic source-event id yields a
+      // deterministic history id — no separate RNG draw needed here.
+      id: `hist_${event.id}`,
       sourceEventId: event.id,
       year: event.timestamp.year,
       category,

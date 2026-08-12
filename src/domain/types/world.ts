@@ -60,6 +60,14 @@ export interface WorldState {
    * so the same seed reproduces the same roster and a save reloads identically.
    */
   seed: number;
+  /**
+   * Live state of the simulation's seeded RNG (mulberry32 accumulator). Set
+   * from the seed at creation and advanced as the day-loop consumes random
+   * draws (weather, background events); persisted so a save/reload resumes
+   * the exact same random sequence rather than restarting it. See
+   * src/utils/rng.ts (SeededRng) and SimulationEngine.advance.
+   */
+  rngCursor: number;
   currentDate: GameDate;
   weather: WeatherState;
   player: PlayerCharacter;

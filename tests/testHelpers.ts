@@ -72,6 +72,7 @@ export function makeTestWorld(overrides: Partial<WorldState> = {}): WorldState {
   return {
     saveVersion: 1,
     seed: 12345,
+    rngCursor: 12345,
     currentDate: { year: 1, season: "spring", day: 1 },
     weather: { current: "clear", daysInCurrentState: 0 },
     player: makeTestPlayer(),

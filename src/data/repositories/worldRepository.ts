@@ -81,6 +81,7 @@ export const worldRepository = {
   async saveAll(world: WorldState): Promise<void> {
     await this.savePlayerAndClock(world.player, world.currentDate, world.weather);
     await setMeta("seed", String(world.seed));
+    await setMeta("rngCursor", String(world.rngCursor >>> 0));
     for (const kingdom of Object.values(world.kingdoms)) {
       await kingdomRepository.upsertKingdom(kingdom);
     }
@@ -108,6 +109,8 @@ export const worldRepository = {
     // Forward-compatible with pre-weather saves (saveVersion 1): default rather than fail.
     const weatherJson = await getMeta("weather");
     const seedJson = await getMeta("seed");
+    const rngCursorJson = await getMeta("rngCursor");
+    const seed = seedJson ? Number(seedJson) >>> 0 : 1;
 
     const [kingdoms, settlements, factions, npcs, quests, events, history] = await Promise.all([
       kingdomRepository.getAllKingdoms(),
@@ -124,7 +127,11 @@ export const worldRepository = {
       // Older saves predate the world seed; default to a stable value so the
       // save still loads. Shopkeeper assignments were already persisted on
       // the NPC rows, so a missing seed doesn't lose the established roster.
-      seed: seedJson ? Number(seedJson) : 1,
+      seed: seed,
+      // Resume the simulation RNG stream where the last save left off. Saves
+      // that predate it (no rngCursor row) start a fresh stream from the seed,
+      // matching how a newly-created world initializes rngCursor.
+      rngCursor: rngCursorJson !== null ? Number(rngCursorJson) >>> 0 : seed,
       currentDate: JSON.parse(dateJson) as GameDate,
       weather: weatherJson ? (JSON.parse(weatherJson) as WeatherState) : DEFAULT_WEATHER,
       // Migrate the persisted player onto the current combat/progression

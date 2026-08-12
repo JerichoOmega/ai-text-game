@@ -26,7 +26,7 @@ const MAX_CASCADE_DEPTH = 8;
 export const EventEngine = {
   async dispatch(manager: WorldStateManager, input: DispatchInput, depth = 0): Promise<WorldEvent> {
     const event: WorldEvent = {
-      id: createId("evt"),
+      id: input.id ?? createId("evt"),
       type: input.type,
       timestamp: input.timestamp,
       description: input.description,

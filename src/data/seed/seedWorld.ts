@@ -162,6 +162,9 @@ export function buildSeedWorld(playerName: string, origin: PlayerOrigin = DEFAUL
   return {
     saveVersion: 1,
     seed,
+    // The live simulation RNG starts from the world seed and advances as the
+    // day-loop consumes draws (see SimulationEngine.advance / SeededRng).
+    rngCursor: seed >>> 0,
     currentDate: START_DATE,
     weather: { current: "clear", daysInCurrentState: 0 },
     player,
