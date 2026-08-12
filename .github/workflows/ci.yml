@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  verify:
+    name: Typecheck · Test · Web export
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: TypeScript (tsc --noEmit)
+        run: yarn typecheck
+
+      - name: Unit tests (node:test)
+        run: yarn test
+
+      - name: Web export (expo export --platform web)
+        run: yarn expo export --platform web
+
+      - name: Assert web bundle has no native Expo SQLite references
+        run: |
+          if grep -rl -e "ExpoSQLite" -e "openDatabaseAsync" dist; then
+            echo "::error::Native Expo SQLite reference found in the web bundle — the web SQLite fix has regressed."
+            exit 1
+          fi
+          echo "OK: web bundle contains no native Expo SQLite references."
