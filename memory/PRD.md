@@ -1,5 +1,13 @@
 # Chronicle — PRD / Working Memory
 
+## UI Composition & Scale Corrections (2026-06, commit 989d88a)
+Presentation/layout-only fixes across Home, bottom nav, and the NPC interaction screen. No gameplay/AI/state/db changes; AI OFF.
+- **Home (`app/index.tsx`)**: artwork now has a dedicated hero region at the top (height = clamp(winH×0.42, 300, 520)) with the CHRONICLE wordmark/tagline anchored to its lower edge and a two-band fade into the surface; the navigation menu was moved onto a separate dark Chronicle surface BELOW the hero (previously the menu overlaid the painting). Continue remains the emphasized accent entry; others are open rows on brass rules.
+- **Bottom nav (`app/(tabs)/_layout.tsx`)**: tab bar height is now inset-aware (`58 + insets.bottom`, `paddingBottom = max(insets.bottom, 8)`) via `useSafeAreaInsets`, so icons + labels are never clipped by the home indicator and content never sits under the bar. React Navigation already insets the scene above the (non-absolute) bar; screen ScrollViews keep their `paddingBottom`.
+- **NPC screen (`app/npc/[id].tsx`)**: replaced the full-bleed 52%-height portrait-as-background with a compact header (back + "Character"), a medium framed portrait bust (168×208, brass frame, cover), name + role beneath, an italic manuscript NPC line, and compact player-choice rows (leading topic icon + label + chevron). Dialogue is now the dominant content; default interaction fits a phone viewport. All testIDs preserved (npc-portrait/name/line/back-button/response-*). People-list medallions on Journey left unchanged (distinct small-portrait context).
+- **Verified**: tsc 0 errors; 217/217 tests; `expo export --platform web` OK; SQLite guard passes. Live smoke on Home confirmed the hero-region/menu-surface split (menu no longer overlays artwork). NOTE: the automation harness still renders bundled raster images as dark placeholders (documented artifact affecting the hero painting and brass icons), so the hero painting's actual pixels and the NPC portrait bust are UNCONFIRMED in-harness; the composition/scale/layout structure is confirmed and all gates pass. Recommend an on-device/browser glance. Agent-tested only.
+
+
 ## UI Polish — Ornate Chronicle Section Rules (2026-06, commit 7eeee70)
 Small presentation-only refinement of the shared `SectionLabel` primitive. No gameplay/AI/state/db changes; AI OFF; no new dependency; brass icons untouched.
 - **Change**: the section rule evolved from a plain hairline to `LABEL ──── ✦ ────` — a restrained brass diamond (rotated 6px View, locked gold token, opacity ~0.8) centered between two flex hairlines, with the optional drill-down link preserved on the right.
