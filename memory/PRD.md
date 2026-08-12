@@ -1,5 +1,14 @@
 # Chronicle — PRD / Working Memory
 
+## Storybook Composition Pass (2026-06, commit 66873fd)
+Presentation-only composition refinements building on 5ce894f. No gameplay/AI/state/db changes; AI OFF; testIDs & navigation preserved.
+- **NPC encounter**: dialogue choices converted from boxed buttons to printed manuscript lines — serif label + bottom hairline rule + trailing marker (`·` for talk/shop, `→` for leave), no filled box. Reads as selectable lines in a story rather than app buttons.
+- **Journey**: "Current Journey"→"Current Chapter"; added a small-caps "OBJECTIVE" heading above objectives; slimmed the Continue action (minHeight 48→44); "People Around You"→"People You Encounter".
+- **Control weight**: reduced oversized control padding/heights so interactive elements feel printed into the page.
+- **Verified**: tsc 0 errors; 217/217 tests; `expo export --platform web` OK; SQLite guard passes. These are View/Text-only changes (no image dependency). NPC/Journey-with-data could not be captured in-harness (recurring world-seed stall on the static server); Home/New Adventure confirmed rendering earlier. Bundled raster imagery remains UNCONFIRMED in-harness. Agent-tested only.
+- **Honest scope**: this was a targeted control/wording/manuscript-line pass, not a full 7-screen illustrated redraw. Deeper illustrated recomposition (large image-authority layouts) is gated on the ability to visually verify — a device/browser screenshot from the user would let this iterate safely, since the automation harness cannot paint bundled images.
+
+
 ## Storybook UI Re-Anchor (2026-06, commit 5ce894f)
 Presentation-only shift from "dark RPG dashboard" toward an illuminated-chronicle/storybook feel. No gameplay/AI/state/db changes; AI OFF; data hooks & navigation unchanged; testIDs preserved.
 - **New `PageTabs` primitive**: serif chapter tabs with an underline on the active page sitting on a single thin brass rule (book-page tabs), replacing the modern filled segmented controls on Character/Chronicle/World. Same testIDs (`character-tab-*`/`character-tabs`, `chronicle-tab-*`, `world-tab-*`/`world-tab-row`).
