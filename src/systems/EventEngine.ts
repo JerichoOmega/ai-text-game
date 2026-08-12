@@ -1,6 +1,5 @@
 import type { WorldEvent } from "@/domain/types";
 import { createId } from "@/utils/id";
-import { eventRepository } from "@/data/repositories/eventRepository";
 import type { WorldStateManager } from "./WorldStateManager";
 import { eventBus, type DispatchInput } from "./EventBus";
 import { Logger } from "@/utils/logger";
@@ -10,13 +9,19 @@ export type { DispatchInput } from "./EventBus";
 const MAX_CASCADE_DEPTH = 8;
 
 /**
- * The only class that creates and persists WorldEvents. It does not know
+ * The only class that creates WorldEvents. It does not know
  * what a "bandit leader" or a "settlement" is — all of that reactive logic
  * lives in eventSubscribers/, which this reaches only through EventBus.emit.
  * This is what Phase 2 means by "no gameplay system should directly call
  * another gameplay system when reacting to world events": EventEngine used
  * to own a CONSEQUENCE_RULES table that called NPCMemorySystem and mutated
  * settlements directly; that table has moved to eventSubscribers/*.ts.
+ *
+ * Persistence note: the new event is added to the in-memory WorldState only.
+ * It is NOT written to SQLite here — the append-only log flush is owned by
+ * WorldTransaction, which writes new events/history during the persist
+ * stage, after the core world save succeeds. This keeps event rows from
+ * being written mid-simulation (and orphaned if persistence later fails).
  */
 export const EventEngine = {
   async dispatch(manager: WorldStateManager, input: DispatchInput, depth = 0): Promise<WorldEvent> {
@@ -32,7 +37,6 @@ export const EventEngine = {
 
     const world = manager.getWorld();
     manager.replaceWorld({ ...world, events: [...world.events, event] });
-    await eventRepository.append(event);
 
     if (depth < MAX_CASCADE_DEPTH) {
       await eventBus.emit(event, {

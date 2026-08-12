@@ -1,6 +1,5 @@
 import type { HistoryCategory, HistoryEntry, WorldEvent, WorldEventType } from "@/domain/types";
 import { createId } from "@/utils/id";
-import { historyRepository } from "@/data/repositories/historyRepository";
 import type { WorldStateManager } from "./WorldStateManager";
 
 /** Which event types are chronicle-worthy, and under what category. Not every
@@ -39,7 +38,11 @@ export const HistoryLog = {
     return eventType in HISTORY_WORTHY;
   },
 
-  /** Records an event to the permanent, append-only chronicle if it qualifies. */
+  /** Records an event to the permanent, append-only chronicle if it qualifies.
+   * Adds the entry to the in-memory WorldState only; the durable write is
+   * flushed by WorldTransaction during the persist stage (see that file),
+   * so history rows are never written mid-simulation. Kept async so the
+   * wildcard history subscriber's `await` and call shape are unchanged. */
   async recordIfWorthy(manager: WorldStateManager, event: WorldEvent): Promise<HistoryEntry | null> {
     const category = HISTORY_WORTHY[event.type];
     if (!category) return null;
@@ -55,7 +58,6 @@ export const HistoryLog = {
 
     const world = manager.getWorld();
     manager.replaceWorld({ ...world, history: [...world.history, entry] });
-    await historyRepository.append(entry);
     return entry;
   },
 
