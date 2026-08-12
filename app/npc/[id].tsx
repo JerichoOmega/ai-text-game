@@ -94,16 +94,8 @@ export default function NpcDialogueScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={["top", "bottom"]}>
-      {/* Portrait-dominant hero */}
-      <View
-        style={styles.portraitWrap}
-        accessible
-        accessibilityRole="image"
-        accessibilityLabel={`${npc.name}, ${occupation}, looking ${emotion}`}
-        testID="npc-portrait"
-      >
-        <Image source={portrait} style={styles.portrait} resizeMode="cover" />
-        <View style={styles.scrim} pointerEvents="none" />
+      {/* Compact header */}
+      <View style={styles.header}>
         <Pressable
           onPress={() => {
             void HapticManager.selection();
@@ -113,27 +105,40 @@ export default function NpcDialogueScreen() {
           accessibilityRole="button"
           accessibilityLabel="Leave the conversation"
           testID="npc-back-button"
-          style={[styles.backButton, { borderColor: theme.goldBorder, backgroundColor: "#0A0806CC" }]}
+          style={[styles.backButton, { borderColor: theme.goldBorder }]}
         >
           <Ionicons name="arrow-back" size={iconSize.standard} color={theme.gold} />
         </Pressable>
-        <View style={styles.namePlate}>
-          <Text
-            style={[styles.name, { color: theme.gold, fontFamily: fontFamily.displayBold, fontSize: scaledFontSize(typeScale.display) }]}
-            numberOfLines={1}
-            allowFontScaling
-            maxFontSizeMultiplier={1.4}
-            testID="npc-name"
-          >
-            {npc.name}
-          </Text>
-          <Text style={[styles.role, { color: theme.inkMuted }]} numberOfLines={1}>{occupation}</Text>
-        </View>
+        <Text style={[styles.headerTitle, { color: theme.inkMuted }]}>Character</Text>
+        <View style={styles.backButton} />
       </View>
 
-      {/* Current line */}
+      {/* Medium framed portrait bust — identity, not a full-screen hero */}
+      <View style={styles.identity}>
+        <View
+          style={[styles.portraitFrame, { borderColor: theme.goldBorder, backgroundColor: theme.surface }]}
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={`${npc.name}, ${occupation}, looking ${emotion}`}
+          testID="npc-portrait"
+        >
+          <Image source={portrait} style={styles.portrait} resizeMode="cover" />
+        </View>
+        <Text
+          style={[styles.name, { color: theme.gold, fontFamily: fontFamily.displayBold, fontSize: scaledFontSize(typeScale.title) }]}
+          numberOfLines={1}
+          allowFontScaling
+          maxFontSizeMultiplier={1.4}
+          testID="npc-name"
+        >
+          {npc.name}
+        </Text>
+        <Text style={[styles.role, { color: theme.inkMuted }]} numberOfLines={1}>{occupation}</Text>
+      </View>
+
+      {/* NPC's spoken line — manuscript italic, distinct from player choices */}
       <View
-        style={[styles.bubble, { backgroundColor: theme.surfaceRaised, borderColor: theme.goldBorder }]}
+        style={[styles.bubble, { borderColor: theme.goldBorder }]}
         accessibilityLiveRegion="polite"
         accessibilityLabel={`${npc.name} says: ${line}`}
         testID="npc-line"
@@ -143,11 +148,11 @@ export default function NpcDialogueScreen() {
           allowFontScaling
           maxFontSizeMultiplier={1.6}
         >
-          {line}
+          “{line}”
         </Text>
       </View>
 
-      {/* Responses */}
+      {/* Player choices — compact interface rows */}
       <ScrollView contentContainerStyle={styles.responses} showsVerticalScrollIndicator={false}>
         {responses.map((r) => (
           <Pressable
@@ -165,6 +170,11 @@ export default function NpcDialogueScreen() {
               },
             ]}
           >
+            <Ionicons
+              name={r.topic === "shop" ? "cart-outline" : r.topic === "leave" ? "exit-outline" : "chatbubble-ellipses-outline"}
+              size={iconSize.inline}
+              color={theme.bronze}
+            />
             <Text
               style={[styles.responseText, { color: theme.ink, fontSize: scaledFontSize(typeScale.body) }]}
               allowFontScaling
@@ -172,11 +182,7 @@ export default function NpcDialogueScreen() {
             >
               {r.label}
             </Text>
-            <Ionicons
-              name={r.topic === "shop" ? "cart-outline" : r.topic === "leave" ? "exit-outline" : "chatbubble-ellipses-outline"}
-              size={iconSize.standard}
-              color={theme.bronze}
-            />
+            <Ionicons name="chevron-forward" size={iconSize.inline} color={theme.inkMuted} />
           </Pressable>
         ))}
       </ScrollView>
@@ -187,42 +193,55 @@ export default function NpcDialogueScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  portraitWrap: { height: "52%", width: "100%", justifyContent: "flex-end" },
-  portrait: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
-  scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: "#0A080699" },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  headerTitle: { fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: "700" },
   backButton: {
-    position: "absolute",
-    top: spacing.md,
-    left: spacing.lg,
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: radii.md,
     borderWidth: StyleSheet.hairlineWidth * 2,
     alignItems: "center",
     justifyContent: "center",
   },
-  namePlate: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
-  name: { fontWeight: "800" },
+  identity: { alignItems: "center", paddingTop: spacing.md, paddingBottom: spacing.sm },
+  portraitFrame: {
+    width: 168,
+    height: 208,
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    overflow: "hidden",
+    padding: 3,
+  },
+  portrait: { width: "100%", height: "100%", borderRadius: radii.md },
+  name: { fontWeight: "800", marginTop: spacing.md, letterSpacing: 0.5 },
   role: { textTransform: "capitalize", marginTop: 2, fontSize: 13 },
   bubble: {
     marginHorizontal: spacing.lg,
-    marginTop: spacing.lg,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
+    marginTop: spacing.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: "rgba(0,0,0,0.22)",
   },
-  bubbleText: { fontStyle: "italic", lineHeight: 24 },
+  bubbleText: { fontStyle: "italic", lineHeight: 23 },
   responses: { padding: spacing.lg, gap: spacing.sm + 2 },
   responseRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: spacing.md,
-    minHeight: 52,
+    minHeight: 48,
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderRadius: radii.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
   },
   responseText: { flex: 1, fontWeight: "600" },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, Pressable, Image, ScrollView, StyleSheet, Animated, Easing } from "react-native";
+import { View, Text, Pressable, Image, ScrollView, StyleSheet, Animated, Easing, useWindowDimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -38,6 +38,8 @@ export default function MainMenuScreen() {
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { height: winH } = useWindowDimensions();
+  const heroHeight = Math.min(Math.max(winH * 0.42, 300), 520);
   const reduceMotion = useReduceMotion();
   const lastSavedAt = useWorldStore((s) => s.lastSavedAt);
 
@@ -94,53 +96,55 @@ export default function MainMenuScreen() {
   ];
 
   return (
-    <View style={styles.root}>
-      <Animated.Image source={HERO} style={[styles.hero, heroTransform]} resizeMode="cover" />
-      {/* Warm torch-glow near the horizon/castle, pulsing softly. */}
-      <Animated.View style={[styles.glow, glowStyle, { backgroundColor: theme.gold }]} pointerEvents="none" />
-      {/* Top and bottom scrims so the wordmark and buttons stay legible over the art. */}
-      <View style={[styles.scrim, styles.scrimTop, { backgroundColor: theme.background }]} pointerEvents="none" />
-      <View style={[styles.scrim, styles.scrimBottom, { backgroundColor: theme.background }]} pointerEvents="none" />
+    <View style={[styles.root, { backgroundColor: theme.background }]}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
+        {/* Dedicated artwork hero region — the painting is allowed to breathe */}
+        <View style={[styles.heroRegion, { height: heroHeight }]}>
+          <Animated.Image source={HERO} style={[styles.hero, heroTransform]} resizeMode="cover" />
+          <Animated.View style={[styles.glow, glowStyle, { backgroundColor: theme.gold }]} pointerEvents="none" />
+          {/* Fade the painting's lower edge into the dark menu surface below. */}
+          <View style={[styles.heroFade, styles.heroFadeSoft, { backgroundColor: theme.background }]} pointerEvents="none" />
+          <View style={[styles.heroFade, styles.heroFadeSolid, { backgroundColor: theme.background }]} pointerEvents="none" />
 
-      <View style={[styles.settingsWrap, { top: insets.top + spacing.sm }]}>
-        <SettingsButton onPress={() => router.push(routes.settings)} borderColor={theme.goldBorder} tint={theme.gold} bg={theme.background} />
-      </View>
-
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.brandBlock}>
-          <View style={styles.wordmarkRow}>
-            <Text
-              testID="main-menu-title"
-              style={[styles.wordmark, { color: theme.gold, fontFamily: fontFamily.displayBold, fontSize: scaledFontSize(typeScale.hero) }]}
-              allowFontScaling
-              maxFontSizeMultiplier={1.3}
-            >
-              CHRONICLE
-            </Text>
-            <View style={[styles.medallion, { borderColor: theme.goldBorder }]}>
-              <Ionicons name="compass" size={iconSize.emphasis} color={theme.gold} />
-            </View>
+          <View style={[styles.settingsWrap, { top: insets.top + spacing.sm }]}>
+            <SettingsButton onPress={() => router.push(routes.settings)} borderColor={theme.goldBorder} tint={theme.gold} bg={theme.background} />
           </View>
-          <Text style={[styles.tagline, { color: theme.bronze }]} allowFontScaling maxFontSizeMultiplier={1.4}>
-            REALMS REMEMBER.  LEGENDS ENDURE.
-          </Text>
+
+          <View style={styles.brandBlock}>
+            <View style={styles.wordmarkRow}>
+              <Text
+                testID="main-menu-title"
+                style={[styles.wordmark, { color: theme.gold, fontFamily: fontFamily.displayBold, fontSize: scaledFontSize(typeScale.hero) }]}
+                allowFontScaling
+                maxFontSizeMultiplier={1.3}
+              >
+                CHRONICLE
+              </Text>
+              <View style={[styles.medallion, { borderColor: theme.goldBorder }]}>
+                <Ionicons name="compass" size={iconSize.emphasis} color={theme.gold} />
+              </View>
+            </View>
+            <Text style={[styles.tagline, { color: theme.bronze }]} allowFontScaling maxFontSizeMultiplier={1.4}>
+              REALMS REMEMBER.  LEGENDS ENDURE.
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.menuBlock}>
-          {items.map((item, i) => (
-            <MenuButton
-              key={item.key}
-              item={item}
-              theme={theme}
-              showDivider={i > 0}
-              onPress={() => {
-                if (item.route) router.push(item.route as never);
-              }}
-            />
-          ))}
+        {/* Navigation lives on the dark Chronicle surface, not over the art */}
+        <View style={[styles.menuSurface, { paddingBottom: insets.bottom + spacing.xl }]}>
+          <View style={styles.menuBlock}>
+            {items.map((item, i) => (
+              <MenuButton
+                key={item.key}
+                item={item}
+                theme={theme}
+                showDivider={i > 0}
+                onPress={() => {
+                  if (item.route) router.push(item.route as never);
+                }}
+              />
+            ))}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -230,19 +234,21 @@ function MenuButton({ item, theme, showDivider, onPress }: { item: MenuItem; the
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, overflow: "hidden" },
+  root: { flex: 1 },
+  content: { flexGrow: 1 },
+  heroRegion: { width: "100%", overflow: "hidden", justifyContent: "flex-end" },
   hero: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
   glow: {
     position: "absolute",
-    top: "22%",
-    right: "18%",
-    width: 240,
-    height: 240,
-    borderRadius: 120,
+    top: "18%",
+    right: "16%",
+    width: 220,
+    height: 220,
+    borderRadius: 110,
   },
-  scrim: { position: "absolute", left: 0, right: 0 },
-  scrimTop: { top: 0, height: "34%", opacity: 0.6 },
-  scrimBottom: { bottom: 0, height: "48%", opacity: 0.92 },
+  heroFade: { position: "absolute", left: 0, right: 0, bottom: 0 },
+  heroFadeSoft: { height: "55%", opacity: 0.55 },
+  heroFadeSolid: { height: "16%", opacity: 0.95 },
   settingsWrap: { position: "absolute", right: spacing.lg, zIndex: 10 },
   settingsButton: {
     width: 40,
@@ -252,8 +258,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  content: { paddingHorizontal: spacing.lg, minHeight: "100%", justifyContent: "space-between" },
-  brandBlock: { alignItems: "center", marginBottom: spacing.xl },
+  brandBlock: { alignItems: "center", paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, zIndex: 5 },
   wordmarkRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   wordmark: { fontWeight: "800", letterSpacing: 3 },
   medallion: {
@@ -265,6 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   tagline: { marginTop: spacing.md, fontSize: 12, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase" },
+  menuSurface: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   menuBlock: { gap: 0 },
   menuButton: {
     flexDirection: "row",

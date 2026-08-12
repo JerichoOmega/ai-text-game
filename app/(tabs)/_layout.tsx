@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Tabs } from "expo-router";
 import { StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/presentation/theme/useTheme";
 import { BrassIcon } from "@/presentation/components/BrassIcon";
 import { MusicDirector } from "@/presentation/audio/MusicDirector";
@@ -19,6 +20,7 @@ import { MusicDirector } from "@/presentation/audio/MusicDirector";
  */
 export default function TabsLayout() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   // Entering the four-tab gameplay experience starts the default background
   // music ("The First Page"), which loops and respects the existing
@@ -42,9 +44,11 @@ export default function TabsLayout() {
           backgroundColor: theme.surface,
           borderTopColor: theme.goldBorder,
           borderTopWidth: StyleSheet.hairlineWidth * 2,
-          height: 62,
+          // Stable intentional height + device safe-area, so icons/labels are
+          // never clipped by the home indicator and content never sits under it.
+          height: 58 + insets.bottom,
           paddingTop: 6,
-          paddingBottom: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
         tabBarItemStyle: { paddingTop: 2 },
