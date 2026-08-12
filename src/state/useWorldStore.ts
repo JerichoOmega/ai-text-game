@@ -63,6 +63,7 @@ interface WorldStore {
   equipItem: (itemId: string) => Promise<void>;
   unequipItem: (itemId: string) => Promise<void>;
   talkTo: (npcId: string) => Promise<void>;
+  travelTo: (settlementId: string) => Promise<void>;
   pushLog: (line: string) => void;
   saveNow: () => Promise<void>;
 }
@@ -443,6 +444,17 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
           timestamp: world.currentDate,
           sentiment: 2,
         });
+        // Announce the conversation so the quest-progress subscriber can
+        // advance any active talk_to_npc objective that targets this NPC and
+        // complete the quest through the existing QuestSystem path. Runs on
+        // the same candidate, so quest progress/reward persist atomically.
+        await EventEngine.dispatch(candidate, {
+          type: "player_talked_to_npc",
+          timestamp: world.currentDate,
+          description: `Spoke with ${npcName}.`,
+          affectedEntityIds: [npcId],
+          originatedFromPlayer: true,
+        });
       },
       (w) => SaveManager.save(w)
     );
@@ -462,6 +474,54 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
   },
 
   pushLog: (line: string) => set((state) => ({ storyLog: [...state.storyLog, line] })),
+
+  /**
+   * Moves the player to a settlement (the game had no travel action before —
+   * `currentSettlementId` was fixed at creation). Persists through the same
+   * WorldTransaction/SaveManager boundary as every other player mutation, and
+   * dispatches `player_arrived_at_settlement` on the candidate so the
+   * quest-progress subscriber can complete any deliver_item objective whose
+   * destination is this settlement. Uses only the existing currentSettlementId
+   * field — no new inventory/delivery data model.
+   */
+  travelTo: async (settlementId: string) => {
+    const { manager, world } = get();
+    if (!manager || !world) return;
+    const destination = world.settlements[settlementId];
+    if (!destination || destination.destroyed) {
+      set({ lastError: "You can't travel there." });
+      return;
+    }
+
+    const outcome = await runTransactionalWorldUpdate(
+      manager,
+      async (candidate) => {
+        const w = candidate.getWorld();
+        candidate.replaceWorld({ ...w, player: { ...w.player, currentSettlementId: settlementId } });
+        await EventEngine.dispatch(candidate, {
+          type: "player_arrived_at_settlement",
+          timestamp: w.currentDate,
+          description: `Arrived at ${destination.name}.`,
+          affectedEntityIds: [settlementId],
+          originatedFromPlayer: true,
+        });
+      },
+      (w) => SaveManager.save(w)
+    );
+
+    if (!outcome.committed) {
+      Logger.error("useWorldStore", `travelTo("${settlementId}") failed at "${outcome.stage}" stage`, outcome.error);
+      set({ lastError: "Couldn't save your travel. Nothing changed." });
+      return;
+    }
+
+    set((state) => ({
+      world: manager.getWorld(),
+      storyLog: [...state.storyLog, `You arrive at ${destination.name}.`],
+      lastSavedAt: new Date(),
+      lastError: null,
+    }));
+  },
 
   /**
    * Does NOT use runTransactionalWorldUpdate — correctly. saveNow has no

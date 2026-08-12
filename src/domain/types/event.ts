@@ -26,6 +26,11 @@ export type WorldEventType =
   | "player_killed_npc"
   | "player_helped_npc"
   | "quest_completed"
+  // Player-driven quest triggers (Phase 2D: non-combat quest completion).
+  // Consumed by questProgressSubscriber to advance talk_to_npc / deliver_item
+  // objectives. Not chronicle-worthy on their own (see HistoryLog).
+  | "player_talked_to_npc"
+  | "player_arrived_at_settlement"
   | "merchant_bankrupt"
   | "weather_changed"
   | "season_changed"

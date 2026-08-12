@@ -108,7 +108,10 @@ export const QuestGenerator = {
               id: createId("obj"),
               type: match.category === "combat" ? "clear_location" : match.category === "delivery" ? "deliver_item" : "talk_to_npc",
               label: match.objectiveLabel,
-              targetId: match.targetSettlementId,
+              // A talk_to_npc objective targets the NPC to speak to (the quest
+              // giver — its label reads "Speak with <giver>"); combat and
+              // delivery objectives target the settlement/location involved.
+              targetId: match.category === "social" ? match.giverNpcId : match.targetSettlementId,
               quantity: 1,
               progress: 0,
               complete: false,
