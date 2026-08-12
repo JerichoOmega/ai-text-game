@@ -1,13 +1,10 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Image, Pressable, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
-import { scaledFontSize, typeScale, radii, spacing, iconSize } from "@/presentation/theme/theme";
-import { Panel } from "@/presentation/components/Panel";
-import { SectionHeader } from "@/presentation/components/SectionHeader";
-import { StatBar } from "@/presentation/components/StatBar";
-import { CharacterHeader } from "@/presentation/components/CharacterHeader";
+import { fontFamily, scaledFontSize, typeScale, radii, spacing, iconSize } from "@/presentation/theme/theme";
+import { SectionLabel } from "@/presentation/components/SectionLabel";
 import { JournalTriggerButton } from "@/presentation/components/JournalTriggerButton";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
 import { capitalize } from "@/utils/format";
@@ -17,6 +14,8 @@ import { getAbility } from "@/data/abilities";
 import { getEquipment } from "@/data/equipment";
 import type { CombatStats } from "@/domain/types";
 
+const PORTRAIT = require("../../assets/images/hero-portrait.jpg");
+
 const STAT_ROWS: Array<{ key: keyof CombatStats; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
   { key: "attack", label: "Attack", icon: "flash" },
   { key: "defense", label: "Defense", icon: "shield" },
@@ -25,9 +24,17 @@ const STAT_ROWS: Array<{ key: keyof CombatStats; label: string; icon: keyof type
   { key: "speed", label: "Speed", icon: "walk" },
 ];
 
+type Tab = "overview" | "stats" | "gear";
+const TABS: Array<{ key: Tab; label: string }> = [
+  { key: "overview", label: "Overview" },
+  { key: "stats", label: "Stats" },
+  { key: "gear", label: "Gear" },
+];
+
 export default function CharacterScreen() {
   const theme = useTheme();
   const world = useWorldStore((s) => s.world);
+  const [tab, setTab] = useState<Tab>("overview");
 
   if (!world) return <ScreenContainer loading loadingLabel="Loading character..." />;
   const { player } = world;
@@ -35,123 +42,184 @@ export default function CharacterScreen() {
   const effective = CharacterSystem.effectiveStats(player);
   const race = getRace(player.raceId);
   const background = getBackground(player.backgroundId);
+  const atMax = player.level >= 12;
 
   const characterAbilities = player.characterAbilityIds.map(getAbility).filter(Boolean);
   const combatAbilities = player.combatAbilityIds.map(getAbility).filter(Boolean);
   const equipment = player.equipmentItemIds.map(getEquipment).filter(Boolean);
 
+  const identityLine = `Level ${player.level} · ${race?.name ?? "Traveler"} · ${background?.name ?? "Wanderer"}`;
+  const placeLine = `${settlement?.name ?? "The Wilds"} · ${capitalize(world.currentDate.season)} · ${capitalize(world.weather.current)}`;
+
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={styles.scrollContent} testID="character-screen">
-        <View style={styles.topRow}>
-          <Text style={[styles.eyebrow, { color: theme.inkMuted }]}>Character</Text>
-          <JournalTriggerButton />
+      <View style={styles.topRow}>
+        <Text style={[styles.eyebrow, { color: theme.inkMuted }]}>Character</Text>
+        <JournalTriggerButton />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} testID="character-screen">
+        {/* Identity hero — the character is the center of the screen. */}
+        <View style={styles.hero}>
+          <View style={[styles.portraitRing, { borderColor: theme.goldBorder }]}>
+            <Image source={PORTRAIT} style={styles.portrait} resizeMode="cover" />
+          </View>
+          <Text style={[styles.name, { color: theme.ink, fontFamily: fontFamily.displayBold, fontSize: scaledFontSize(typeScale.hero) }]} numberOfLines={1}>
+            {player.name}
+          </Text>
+          <Text style={[styles.identity, { color: theme.bronze }]}>{identityLine}</Text>
+          <Text style={[styles.place, { color: theme.inkMuted }]}>{placeLine}</Text>
         </View>
-        <Panel>
-          <CharacterHeader
-            name={player.name}
-            level={player.level}
-            subtitle={`${race?.name ?? "Traveler"} ${background?.name ?? ""}`.trim()}
-            hp={player.hp}
-            maxHp={player.maxHp}
-            chips={[
-              { icon: "location", label: settlement?.name ?? "Unknown" },
-              { icon: "leaf", label: capitalize(world.currentDate.season) },
-              { icon: "cloud", label: capitalize(world.weather.current) },
-            ]}
-          />
-        </Panel>
 
-        <View style={styles.sectionGap} />
-        <Panel>
-          <StatBar
-            label={player.level >= 12 ? "Experience (max level)" : "Experience"}
-            current={player.level >= 12 ? 1 : player.xp}
-            max={player.level >= 12 ? 1 : player.xpToNextLevel}
+        {/* Essential progression — always visible. */}
+        <View style={styles.meters}>
+          <Meter label="Health" current={player.hp} max={player.maxHp} color={theme.forest} theme={theme} />
+          <Meter
+            label={atMax ? "Experience · Max Level" : "Experience"}
+            current={atMax ? 1 : player.xp}
+            max={atMax ? 1 : player.xpToNextLevel}
             color={theme.accent}
+            theme={theme}
           />
-        </Panel>
+        </View>
 
-        <View style={styles.sectionGap} />
-        <SectionHeader label="Combat Stats" />
-        <Panel>
-          {STAT_ROWS.map((row, i) => {
-            const bonus = effective[row.key] - player.stats[row.key];
+        {/* Drill-down: keep secondary detail behind tabs instead of stacking it all. */}
+        <View style={[styles.segment, { borderColor: theme.goldBorder }]} testID="character-tabs">
+          {TABS.map((t) => {
+            const active = t.key === tab;
             return (
-              <View
-                key={row.key}
-                style={[styles.statRow, i < STAT_ROWS.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border }]}
-                testID={`stat-${row.key}`}
+              <Pressable
+                key={t.key}
+                onPress={() => setTab(t.key)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                testID={`character-tab-${t.key}`}
+                style={[styles.segmentBtn, active && { backgroundColor: theme.surfaceRaised }]}
               >
-                <View style={styles.statLabelRow}>
-                  <Ionicons name={row.icon} size={iconSize.standard} color={theme.bronze} />
-                  <Text style={{ color: theme.inkMuted }}>{row.label}</Text>
-                </View>
-                <Text style={{ color: theme.ink, fontWeight: "700" }}>
-                  {effective[row.key]}
-                  {bonus !== 0 && <Text style={{ color: theme.forest }}>{`  (${bonus > 0 ? "+" : ""}${bonus})`}</Text>}
-                </Text>
-              </View>
+                <Text style={[styles.segmentLabel, { color: active ? theme.gold : theme.inkMuted }]}>{t.label}</Text>
+              </Pressable>
             );
           })}
-        </Panel>
+        </View>
 
-        <View style={styles.sectionGap} />
-        <SectionHeader label={`Character Abilities (${characterAbilities.length})`} />
-        <Panel>
-          {characterAbilities.length === 0 && <Text style={{ color: theme.inkMuted, fontStyle: "italic" }}>None yet.</Text>}
-          {characterAbilities.map((a, i) => (
-            <View key={a!.id} style={[styles.abilityRow, i < characterAbilities.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border }]} testID={`character-ability-${a!.id}`}>
-              <Text style={{ color: theme.gold, fontWeight: "700" }}>{a!.name}</Text>
-              <Text style={{ color: theme.inkMuted, fontSize: 13, marginTop: 2 }}>{a!.description}</Text>
+        {tab === "overview" && (
+          <View>
+            <SectionLabel label="Abilities" tone="gold" />
+            {characterAbilities.length === 0 && combatAbilities.length === 0 ? (
+              <Text style={[styles.muted, { color: theme.inkMuted }]}>No abilities yet — you'll earn your first as you grow.</Text>
+            ) : (
+              <>
+                {characterAbilities.map((a) => (
+                  <AbilityRow key={a!.id} name={a!.name} description={a!.description} theme={theme} testID={`character-ability-${a!.id}`} />
+                ))}
+                {combatAbilities.map((a) => (
+                  <AbilityRow key={a!.id} name={a!.name} description={a!.description} theme={theme} testID={`combat-ability-${a!.id}`} />
+                ))}
+              </>
+            )}
+          </View>
+        )}
+
+        {tab === "stats" && (
+          <View>
+            <SectionLabel label="Attributes" tone="gold" />
+            {STAT_ROWS.map((row) => {
+              const bonus = effective[row.key] - player.stats[row.key];
+              return (
+                <View key={row.key} style={styles.ledgerRow} testID={`stat-${row.key}`}>
+                  <View style={styles.ledgerLabel}>
+                    <Ionicons name={row.icon} size={iconSize.inline} color={theme.bronze} />
+                    <Text style={{ color: theme.inkMuted }}>{row.label}</Text>
+                  </View>
+                  <Text style={[styles.dotLeader, { borderBottomColor: theme.border }]} />
+                  <Text style={{ color: theme.ink, fontWeight: "700", fontSize: scaledFontSize(typeScale.body) }}>
+                    {effective[row.key]}
+                    {bonus !== 0 && <Text style={{ color: theme.forest, fontSize: scaledFontSize(typeScale.caption) }}>{` (${bonus > 0 ? "+" : ""}${bonus})`}</Text>}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {tab === "gear" && (
+          <View>
+            <SectionLabel label="Equipment" tone="gold" />
+            {equipment.length === 0 ? (
+              <Text style={[styles.muted, { color: theme.inkMuted }]}>Nothing equipped.</Text>
+            ) : (
+              equipment.map((e) => (
+                <View key={e!.id} style={styles.ledgerRow} testID={`equipment-${e!.id}`}>
+                  <Text style={{ color: theme.ink, fontWeight: "600", flexShrink: 1 }}>{e!.name}</Text>
+                  <Text style={[styles.dotLeader, { borderBottomColor: theme.border }]} />
+                  <Text style={{ color: theme.forest, fontSize: scaledFontSize(typeScale.caption) }}>
+                    {Object.entries(e!.modifiers).map(([k, v]) => `+${v} ${k}`).join(", ")}
+                  </Text>
+                </View>
+              ))
+            )}
+
+            <View style={styles.purseGap} />
+            <SectionLabel label="Purse" />
+            <View style={styles.purseRow}>
+              <Ionicons name="cash" size={iconSize.standard} color={theme.gold} />
+              <Text style={{ color: theme.ink, fontWeight: "700", fontSize: scaledFontSize(typeScale.title) }}>{player.gold} gold</Text>
             </View>
-          ))}
-        </Panel>
-
-        <View style={styles.sectionGap} />
-        <SectionHeader label={`Combat Abilities (${combatAbilities.length})`} />
-        <Panel>
-          {combatAbilities.length === 0 && <Text style={{ color: theme.inkMuted, fontStyle: "italic" }}>None yet — you'll earn your first at Level 2.</Text>}
-          {combatAbilities.map((a, i) => (
-            <View key={a!.id} style={[styles.abilityRow, i < combatAbilities.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border }]} testID={`combat-ability-${a!.id}`}>
-              <Text style={{ color: theme.gold, fontWeight: "700" }}>{a!.name}</Text>
-              <Text style={{ color: theme.inkMuted, fontSize: 13, marginTop: 2 }}>{a!.description}</Text>
-            </View>
-          ))}
-        </Panel>
-
-        <View style={styles.sectionGap} />
-        <SectionHeader label="Equipment" />
-        <Panel>
-          {equipment.length === 0 && <Text style={{ color: theme.inkMuted, fontStyle: "italic" }}>Nothing equipped.</Text>}
-          {equipment.map((e, i) => (
-            <View key={e!.id} style={[styles.statRow, i < equipment.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border }]} testID={`equipment-${e!.id}`}>
-              <Text style={{ color: theme.ink, fontWeight: "600" }}>{e!.name}</Text>
-              <Text style={{ color: theme.forest, fontSize: 13 }}>
-                {Object.entries(e!.modifiers).map(([k, v]) => `+${v} ${k}`).join(", ")}
-              </Text>
-            </View>
-          ))}
-        </Panel>
-
-        <View style={styles.sectionGap} />
-        <SectionHeader label="Purse" />
-        <Panel style={styles.goldRow}>
-          <Ionicons name="cash" size={iconSize.standard} color={theme.gold} />
-          <Text style={{ color: theme.ink, fontWeight: "700", fontSize: scaledFontSize(typeScale.title) }}>{player.gold} gold</Text>
-        </Panel>
+          </View>
+        )}
       </ScrollView>
     </ScreenContainer>
   );
 }
 
+function Meter({ label, current, max, color, theme }: { label: string; current: number; max: number; color: string; theme: ReturnType<typeof useTheme> }) {
+  const pct = max > 0 ? Math.max(0, Math.min(1, current / max)) : 0;
+  return (
+    <View style={styles.meter}>
+      <View style={styles.meterHead}>
+        <Text style={[styles.meterLabel, { color: theme.inkMuted }]}>{label}</Text>
+        <Text style={{ color: theme.ink, fontWeight: "700" }}>{current} / {max}</Text>
+      </View>
+      <View style={[styles.track, { backgroundColor: theme.border }]}>
+        <View style={[styles.fill, { backgroundColor: color, width: `${Math.round(pct * 100)}%` }]} />
+      </View>
+    </View>
+  );
+}
+
+function AbilityRow({ name, description, theme, testID }: { name: string; description: string; theme: ReturnType<typeof useTheme>; testID: string }) {
+  return (
+    <View style={styles.abilityRow} testID={testID}>
+      <Text style={{ color: theme.gold, fontWeight: "700", fontFamily: fontFamily.display }}>{name}</Text>
+      <Text style={{ color: theme.inkMuted, fontSize: 13, marginTop: 2, lineHeight: 18 }}>{description}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  scrollContent: { paddingBottom: 24, paddingTop: 12 },
-  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: spacing.sm, paddingBottom: spacing.sm },
   eyebrow: { fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: "700" },
-  sectionGap: { height: 20 },
-  statRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10 },
-  statLabelRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  abilityRow: { paddingVertical: 10 },
-  goldRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  scroll: { paddingBottom: spacing.xxl },
+  hero: { alignItems: "center", paddingTop: spacing.md },
+  portraitRing: { width: 104, height: 104, borderRadius: radii.pill, borderWidth: 2, padding: 3, overflow: "hidden" },
+  portrait: { width: "100%", height: "100%", borderRadius: radii.pill },
+  name: { fontWeight: "800", letterSpacing: 1, marginTop: spacing.md },
+  identity: { marginTop: 4, fontSize: 14, letterSpacing: 0.5 },
+  place: { marginTop: 2, fontSize: 12, fontStyle: "italic" },
+  meters: { marginTop: spacing.xl, gap: spacing.md },
+  meter: {},
+  meterHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 6 },
+  meterLabel: { fontSize: 12, textTransform: "uppercase", letterSpacing: 1, fontWeight: "700" },
+  track: { height: 6, borderRadius: 3, overflow: "hidden" },
+  fill: { height: "100%", borderRadius: 3 },
+  segment: { flexDirection: "row", borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.sm, padding: 3, marginTop: spacing.xl, marginBottom: spacing.lg },
+  segmentBtn: { flex: 1, paddingVertical: 9, borderRadius: radii.xs, alignItems: "center" },
+  segmentLabel: { fontWeight: "700", fontSize: 13, letterSpacing: 0.5 },
+  muted: { fontStyle: "italic" },
+  abilityRow: { paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "transparent" },
+  ledgerRow: { flexDirection: "row", alignItems: "flex-end", gap: spacing.sm, paddingVertical: spacing.sm },
+  ledgerLabel: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  dotLeader: { flex: 1, borderBottomWidth: StyleSheet.hairlineWidth, marginBottom: 5, opacity: 0.6 },
+  purseGap: { height: spacing.xl },
+  purseRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.sm },
 });

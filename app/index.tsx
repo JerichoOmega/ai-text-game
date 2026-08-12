@@ -128,11 +128,12 @@ export default function MainMenuScreen() {
         </View>
 
         <View style={styles.menuBlock}>
-          {items.map((item) => (
+          {items.map((item, i) => (
             <MenuButton
               key={item.key}
               item={item}
               theme={theme}
+              showDivider={i > 0}
               onPress={() => {
                 if (item.route) router.push(item.route as never);
               }}
@@ -162,10 +163,10 @@ function SettingsButton({ onPress, borderColor, tint, bg }: { onPress: () => voi
   );
 }
 
-function MenuButton({ item, theme, onPress }: { item: MenuItem; theme: ReturnType<typeof useTheme>; onPress: () => void }) {
+function MenuButton({ item, theme, showDivider, onPress }: { item: MenuItem; theme: ReturnType<typeof useTheme>; showDivider: boolean; onPress: () => void }) {
   const { scale, onPressIn, onPressOut } = usePressScale();
-  const borderColor = item.highlight ? theme.accent : theme.goldBorder;
-  const iconColor = item.highlight ? theme.accent : theme.gold;
+  const highlight = !!item.highlight;
+  const iconColor = highlight ? theme.accent : theme.gold;
   const titleColor = item.disabled ? theme.inkMuted : theme.ink;
 
   const handlePress = () => {
@@ -188,14 +189,19 @@ function MenuButton({ item, theme, onPress }: { item: MenuItem; theme: ReturnTyp
         testID={`main-menu-${item.key}-button`}
         style={({ pressed }) => [
           styles.menuButton,
-          {
-            borderColor,
-            backgroundColor: (item.highlight ? theme.surfaceRaised : theme.panel) + "E6",
-            opacity: item.disabled ? 0.5 : pressed ? 0.85 : 1,
+          highlight && {
+            backgroundColor: theme.surfaceRaised + "E6",
+            borderColor: theme.accent,
+            borderWidth: StyleSheet.hairlineWidth * 2,
+            borderRadius: radii.md,
+            paddingHorizontal: spacing.lg,
+            marginBottom: spacing.sm,
           },
+          !highlight && showDivider && { borderTopColor: theme.goldBorder + "55", borderTopWidth: StyleSheet.hairlineWidth },
+          { opacity: item.disabled ? 0.5 : pressed ? 0.8 : 1 },
         ]}
       >
-        <View style={[styles.iconWell, { borderColor }]}>
+        <View style={[styles.iconWell, { borderColor: highlight ? theme.accent : theme.goldBorder }]}>
           <Ionicons name={item.icon} size={iconSize.standard} color={iconColor} />
         </View>
         <View style={styles.menuText}>
@@ -253,20 +259,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   tagline: { marginTop: spacing.md, fontSize: 12, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase" },
-  menuBlock: { gap: spacing.sm + 2 },
+  menuBlock: { gap: 0 },
   menuButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md + 2,
     minHeight: 62,
   },
   iconWell: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: radii.sm,
     borderWidth: 1,
     alignItems: "center",

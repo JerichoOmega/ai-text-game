@@ -53,9 +53,9 @@ export default function JourneyScreen() {
     return world.history
       .map((e, index) => ({ e, index }))
       .sort((a, b) => b.e.year - a.e.year || b.index - a.index)
-      .slice(0, 3)
+      .slice(0, wide ? 3 : 2)
       .map(({ e }) => ({ id: e.id, headline: e.headline, category: e.category, year: e.year }));
-  }, [world]);
+  }, [world, wide]);
 
   const activeQuest = useMemo(() => {
     if (!world) return undefined;
@@ -109,13 +109,7 @@ export default function JourneyScreen() {
     />
   ) : null;
 
-  const people = (
-    <PeopleSection
-      npcs={npcsHere}
-      onSelect={(id) => router.push(routes.npc(id))}
-      limit={6}
-    />
-  );
+  const people = <PeopleSection npcs={npcsHere} onSelect={(id) => router.push(routes.npc(id))} limit={wide ? 6 : 4} />;
   const events = <RecentEvents events={recentEvents} onViewAll={() => router.push(routes.chronicle)} />;
 
   return (
@@ -128,7 +122,7 @@ export default function JourneyScreen() {
           weatherIcon={weather.icon}
           statusLabel={status.label}
           statusWarning={status.warning}
-          height={wide ? 300 : 200}
+          height={wide ? 300 : 190}
           imageWidth={Math.max(320, width - spacing.lg * 2)}
           artworkSource={getLocationArtwork(currentSettlement)}
         />
@@ -158,9 +152,9 @@ export default function JourneyScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: spacing.xl, gap: spacing.lg },
-  blockGap: { marginTop: spacing.lg },
-  columns: { flexDirection: "row", gap: spacing.xl, marginTop: spacing.lg },
+  scroll: { paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.lg },
+  blockGap: { marginTop: spacing.xl },
+  columns: { flexDirection: "row", gap: spacing.xl, marginTop: spacing.xl },
   primaryCol: { flex: 2, minWidth: 0 },
   secondaryCol: { flex: 1, minWidth: 0 },
 });

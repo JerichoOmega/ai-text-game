@@ -7,15 +7,15 @@ import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
 import { fontFamily, scaledFontSize, typeScale, radii, spacing, iconSize } from "@/presentation/theme/theme";
 import { ActionButton } from "@/presentation/components/ActionButton";
-import { Panel } from "@/presentation/components/Panel";
-import { SectionHeader } from "@/presentation/components/SectionHeader";
+import { ChronicleBackground } from "@/presentation/components/ChronicleBackground";
+import { SectionLabel } from "@/presentation/components/SectionLabel";
 import { routes } from "@/presentation/navigation/routes";
 import { RACES, BACKGROUNDS, MOTIVATIONS } from "@/data/origins";
 
 /**
- * New Adventure / character creation (Part 7): name, race, background, and
- * motivation. No classes, no point allocation — race + background apply a
- * small deterministic stat bias and grant the Level-1 Character Ability.
+ * New Adventure / character creation, presented as pages of a character
+ * ledger: an intro passage, a large serif name field, and compact selection
+ * groups with flavor text. No boxed form fields — the manuscript is the frame.
  */
 export default function NewAdventureScreen() {
   const theme = useTheme();
@@ -48,30 +48,39 @@ export default function NewAdventureScreen() {
       testID={testID}
       style={({ pressed }) => [
         styles.chip,
-        { borderColor: active ? theme.gold : theme.goldBorder, backgroundColor: active ? theme.gold : theme.panel, opacity: pressed ? 0.85 : 1 },
+        {
+          borderColor: active ? theme.gold : theme.goldBorder,
+          backgroundColor: active ? theme.gold : "transparent",
+          opacity: pressed ? 0.85 : 1,
+        },
       ]}
     >
-      <Text style={{ color: active ? theme.background : theme.ink, fontWeight: active ? "700" : "500" }}>{label}</Text>
+      <Text style={{ color: active ? theme.background : theme.ink, fontWeight: active ? "700" : "500", letterSpacing: 0.3 }}>{label}</Text>
     </Pressable>
   );
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg }]}
-    >
-      <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: theme.gold, fontFamily: fontFamily.displayBold, fontSize: scaledFontSize(typeScale.display) }]} testID="new-adventure-title">
-          New Adventure
-        </Text>
-        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Cancel" testID="new-adventure-cancel-button" style={[styles.closeButton, { borderColor: theme.goldBorder }]}>
-          <Ionicons name="close" size={iconSize.standard} color={theme.gold} />
-        </Pressable>
-      </View>
+    <View style={[styles.root, { backgroundColor: theme.background }]}>
+      <ChronicleBackground />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={[styles.container, { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.md }]}
+      >
+        <View style={styles.headerRow}>
+          <Text style={[styles.title, { color: theme.gold, fontFamily: fontFamily.displayBold, fontSize: scaledFontSize(typeScale.display) }]} testID="new-adventure-title">
+            A New Saga
+          </Text>
+          <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Cancel" testID="new-adventure-cancel-button" style={[styles.closeButton, { borderColor: theme.goldBorder }]}>
+            <Ionicons name="close" size={iconSize.standard} color={theme.gold} />
+          </Pressable>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <Panel style={styles.field}>
-          <Text style={[styles.fieldLabel, { color: theme.inkMuted }]}>Hero name</Text>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <Text style={[styles.intro, { color: theme.inkMuted }]}>
+            Every legend begins with a name. Shape the wanderer whose deeds the realm will remember.
+          </Text>
+
+          <SectionLabel label="Name Your Hero" tone="gold" />
           <TextInput
             value={name}
             onChangeText={setName}
@@ -82,71 +91,72 @@ export default function NewAdventureScreen() {
             testID="new-adventure-name-input"
             style={[styles.input, { color: theme.ink, fontFamily: fontFamily.displayBold, borderBottomColor: theme.goldBorder }]}
           />
-        </Panel>
 
-        <SectionHeader label="Ancestry" />
-        <View style={styles.chipRow} testID="race-chips">
-          {RACES.map((r) => (
-            <Chip key={r.id} id={r.id} label={r.name} active={raceId === r.id} onPress={() => setRaceId(r.id)} testID={`race-${r.id}`} />
-          ))}
+          <View style={styles.groupGap} />
+          <SectionLabel label="Ancestry" />
+          <View style={styles.chipRow} testID="race-chips">
+            {RACES.map((r) => (
+              <Chip key={r.id} id={r.id} label={r.name} active={raceId === r.id} onPress={() => setRaceId(r.id)} testID={`race-${r.id}`} />
+            ))}
+          </View>
+
+          <View style={styles.groupGap} />
+          <SectionLabel label="Background" />
+          <View style={styles.chipRow} testID="background-chips">
+            {BACKGROUNDS.map((b) => (
+              <Chip key={b.id} id={b.id} label={b.name} active={backgroundId === b.id} onPress={() => setBackgroundId(b.id)} testID={`background-${b.id}`} />
+            ))}
+          </View>
+          {selectedBackground && (
+            <Text style={[styles.help, { color: theme.inkMuted }]} testID="background-help">
+              {selectedBackground.description}
+            </Text>
+          )}
+
+          <View style={styles.groupGap} />
+          <SectionLabel label="Motivation" />
+          <View style={styles.chipRow} testID="motivation-chips">
+            {MOTIVATIONS.map((m) => (
+              <Chip key={m.id} id={m.id} label={m.name} active={motivationId === m.id} onPress={() => setMotivationId(m.id)} testID={`motivation-${m.id}`} />
+            ))}
+          </View>
+          {selectedMotivation && <Text style={[styles.help, { color: theme.inkMuted }]}>{selectedMotivation.description}</Text>}
+
+          <View style={styles.warningRow}>
+            <Ionicons name="alert-circle-outline" size={iconSize.inline} color={theme.wax} />
+            <Text style={[styles.warningText, { color: theme.inkMuted }]}>
+              Beginning a new saga replaces your current save. Choose Continue on the menu to keep your existing story.
+            </Text>
+          </View>
+        </ScrollView>
+
+        <View testID="new-adventure-begin-wrap" style={styles.beginWrap}>
+          <ActionButton
+            label={loading ? "Forging your world..." : "Begin the Saga"}
+            onPress={begin}
+            disabled={loading}
+            accessibilityHint="Creates a new world and starts playing"
+          />
         </View>
-
-        <View style={styles.sectionGap} />
-        <SectionHeader label="Background" />
-        <View style={styles.chipRow} testID="background-chips">
-          {BACKGROUNDS.map((b) => (
-            <Chip key={b.id} id={b.id} label={b.name} active={backgroundId === b.id} onPress={() => setBackgroundId(b.id)} testID={`background-${b.id}`} />
-          ))}
-        </View>
-        {selectedBackground && (
-          <Text style={[styles.help, { color: theme.inkMuted }]} testID="background-help">
-            {selectedBackground.description}
-          </Text>
-        )}
-
-        <View style={styles.sectionGap} />
-        <SectionHeader label="Motivation" />
-        <View style={styles.chipRow} testID="motivation-chips">
-          {MOTIVATIONS.map((m) => (
-            <Chip key={m.id} id={m.id} label={m.name} active={motivationId === m.id} onPress={() => setMotivationId(m.id)} testID={`motivation-${m.id}`} />
-          ))}
-        </View>
-        {selectedMotivation && <Text style={[styles.help, { color: theme.inkMuted }]}>{selectedMotivation.description}</Text>}
-
-        <View style={[styles.warningRow, { borderColor: theme.goldBorder }]}>
-          <Ionicons name="alert-circle-outline" size={iconSize.standard} color={theme.wax} />
-          <Text style={[styles.warningText, { color: theme.inkMuted }]}>
-            Starting a new adventure replaces your current save. Use Continue on the menu to keep playing your existing saga.
-          </Text>
-        </View>
-      </ScrollView>
-
-      <View testID="new-adventure-begin-wrap" style={styles.beginWrap}>
-        <ActionButton
-          label={loading ? "Forging your world..." : "Begin the saga"}
-          onPress={begin}
-          disabled={loading}
-          accessibilityHint="Creates a new world and starts playing"
-        />
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   container: { flex: 1, paddingHorizontal: spacing.lg },
-  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md },
-  title: { fontWeight: "800" },
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.sm },
+  title: { fontWeight: "800", letterSpacing: 1 },
   closeButton: { width: 32, height: 32, borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: "center", justifyContent: "center" },
   scroll: { paddingBottom: spacing.lg },
-  field: { marginBottom: spacing.lg },
-  fieldLabel: { fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: "700", marginBottom: spacing.sm },
-  input: { fontSize: 24, fontWeight: "700", paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth * 2 },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.sm },
+  intro: { fontSize: 14, lineHeight: 21, fontStyle: "italic", marginBottom: spacing.xl },
+  input: { fontSize: 26, fontWeight: "700", paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth * 2 },
+  groupGap: { height: spacing.xl },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   chip: { borderWidth: StyleSheet.hairlineWidth * 2, borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, minHeight: 40, justifyContent: "center" },
-  help: { fontSize: 13, lineHeight: 19, marginTop: spacing.sm, fontStyle: "italic" },
-  sectionGap: { height: spacing.lg },
-  warningRow: { flexDirection: "row", gap: spacing.sm, alignItems: "flex-start", borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, padding: spacing.md, marginTop: spacing.xl },
-  warningText: { flex: 1, fontSize: 13, lineHeight: 19 },
+  help: { fontSize: 13, lineHeight: 19, marginTop: spacing.md, fontStyle: "italic" },
+  warningRow: { flexDirection: "row", gap: spacing.sm, alignItems: "flex-start", marginTop: spacing.xxl },
+  warningText: { flex: 1, fontSize: 12, lineHeight: 18 },
   beginWrap: { paddingTop: spacing.md },
 });

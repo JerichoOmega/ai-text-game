@@ -1,9 +1,10 @@
 import React, { type ReactNode } from "react";
-import { StyleSheet, type ViewStyle } from "react-native";
+import { View, StyleSheet, type ViewStyle } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { useTheme } from "../theme/useTheme";
 import { spacing } from "../theme/theme";
 import { LoadingState } from "./LoadingState";
+import { ChronicleBackground } from "./ChronicleBackground";
 
 interface ScreenContainerProps {
   children?: ReactNode;
@@ -26,12 +27,16 @@ export function ScreenContainer({ children, loading, loadingLabel, edges = ["top
   }
 
   return (
-    <SafeAreaView style={[styles.base, { backgroundColor: theme.background }, style]} edges={edges}>
-      {children}
-    </SafeAreaView>
+    <View style={[styles.root, { backgroundColor: theme.background }]}>
+      <ChronicleBackground />
+      <SafeAreaView style={[styles.base, style]} edges={edges}>
+        {children}
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  base: { flex: 1, paddingHorizontal: spacing.lg },
+  root: { flex: 1 },
+  base: { flex: 1, paddingHorizontal: spacing.lg, backgroundColor: "transparent" },
 });

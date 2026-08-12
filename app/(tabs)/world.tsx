@@ -4,8 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
 import { fontFamily, scaledFontSize, typeScale, iconSize, radii, spacing } from "@/presentation/theme/theme";
-import { Panel } from "@/presentation/components/Panel";
-import { SectionHeader } from "@/presentation/components/SectionHeader";
 import { JournalTriggerButton } from "@/presentation/components/JournalTriggerButton";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
 import type { Settlement } from "@/domain/types";
@@ -13,17 +11,15 @@ import type { Settlement } from "@/domain/types";
 const MAP_IMAGE = require("../../assets/images/world-map.jpg");
 
 type WorldTab = "map" | "kingdoms" | "factions" | "locations";
-const TABS: Array<{ key: WorldTab; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
-  { key: "map", label: "Map", icon: "map" },
-  { key: "kingdoms", label: "Kingdoms", icon: "shield" },
-  { key: "factions", label: "Factions", icon: "flag" },
-  { key: "locations", label: "Locations", icon: "location" },
+const TABS: Array<{ key: WorldTab; label: string }> = [
+  { key: "map", label: "Map" },
+  { key: "kingdoms", label: "Kingdoms" },
+  { key: "factions", label: "Factions" },
+  { key: "locations", label: "Locations" },
 ];
 
 /** Deterministic marker layout across the painted map (normalized 0-1),
- * assigned by settlement order so placement is stable across renders.
- * Marker position is purely presentational — the simulation has no map
- * coordinates, so this is a fixed spread rather than fabricated geodata. */
+ * assigned by settlement order so placement is stable across renders. */
 const MARKER_SLOTS = [
   { x: 0.34, y: 0.24 },
   { x: 0.63, y: 0.38 },
@@ -68,26 +64,25 @@ export default function WorldScreen() {
         <JournalTriggerButton />
       </View>
 
-      <View style={styles.tabRow} testID="world-tab-row">
+      <View style={[styles.segment, { borderColor: theme.goldBorder }]} testID="world-tab-row">
         {TABS.map((t) => {
           const active = t.key === tab;
           return (
             <Pressable
               key={t.key}
               onPress={() => setTab(t.key)}
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityState={{ selected: active }}
               testID={`world-tab-${t.key}`}
-              style={[styles.tabChip, { borderColor: active ? theme.accent : theme.goldBorder, backgroundColor: active ? theme.surfaceRaised : theme.panel }]}
+              style={[styles.segmentBtn, active && { backgroundColor: theme.surfaceRaised }]}
             >
-              <Ionicons name={t.icon} size={iconSize.inline} color={active ? theme.accent : theme.gold} />
-              <Text style={[styles.tabLabel, { color: active ? theme.accent : theme.inkMuted }]}>{t.label}</Text>
+              <Text style={[styles.segmentLabel, { color: active ? theme.gold : theme.inkMuted }]}>{t.label}</Text>
             </Pressable>
           );
         })}
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {tab === "map" && (
           <>
             <ImageBackground source={MAP_IMAGE} style={styles.map} imageStyle={[styles.mapImage, { borderColor: theme.goldBorder }]} resizeMode="cover">
@@ -116,21 +111,21 @@ export default function WorldScreen() {
             </ImageBackground>
 
             {selected ? (
-              <Panel style={styles.detailCard}>
-                <View style={styles.cardHeaderRow}>
+              <View style={[styles.detail, { borderTopColor: theme.goldBorder }]}>
+                <View style={styles.entryHead}>
                   <Ionicons name={selected.type === "city" ? "business" : "home"} size={iconSize.standard} color={markerColor(selected)} />
-                  <Text style={[styles.cardTitle, { color: theme.ink }]}>{selected.name}</Text>
-                  {selected.destroyed && <Text style={{ color: theme.wax, fontWeight: "700", fontSize: 12 }}>DESTROYED</Text>}
+                  <Text style={[styles.entryName, { color: theme.ink }]}>{selected.name}</Text>
+                  {selected.destroyed && <Text style={[styles.destroyed, { color: theme.wax }]}>DESTROYED</Text>}
                 </View>
-                <Text style={{ color: theme.inkMuted, marginTop: 4, textTransform: "capitalize" }}>
+                <Text style={[styles.entryMeta, { color: theme.inkMuted }]}>
                   {selected.type}
                   {selected.controllingFactionId ? ` · ${world.factions[selected.controllingFactionId]?.name ?? "unaligned"}` : " · unaligned"}
                 </Text>
                 <View style={styles.metricRow}>
-                  <Text style={{ color: theme.inkMuted, fontSize: 12 }}>Prosperity {selected.prosperity}</Text>
-                  <Text style={{ color: theme.inkMuted, fontSize: 12 }}>Road safety {selected.roadSafety}</Text>
+                  <Text style={[styles.metric, { color: theme.inkMuted }]}>Prosperity {selected.prosperity}</Text>
+                  <Text style={[styles.metric, { color: theme.inkMuted }]}>Road safety {selected.roadSafety}</Text>
                 </View>
-              </Panel>
+              </View>
             ) : (
               <Text style={[styles.hint, { color: theme.inkMuted }]}>Tap a marker to inspect a settlement.</Text>
             )}
@@ -138,20 +133,20 @@ export default function WorldScreen() {
         )}
 
         {tab === "kingdoms" &&
-          kingdoms.map((kingdom) => {
+          kingdoms.map((kingdom, i) => {
             const ruler = kingdom.rulerId ? world.npcs[kingdom.rulerId] : undefined;
             return (
-              <Panel key={kingdom.id} style={styles.card}>
-                <View style={styles.cardHeaderRow}>
+              <View key={kingdom.id} style={[styles.entry, i > 0 && styles.entryDivider, { borderTopColor: theme.border }]}>
+                <View style={styles.entryHead}>
                   <Ionicons name="shield" size={iconSize.standard} color={theme.gold} />
-                  <Text style={[styles.cardTitle, { color: theme.ink }]}>{kingdom.name}</Text>
+                  <Text style={[styles.entryName, { color: theme.ink }]}>{kingdom.name}</Text>
                 </View>
-                <Text style={{ color: theme.inkMuted, marginTop: 4 }}>{ruler ? `Ruled by ${ruler.name}` : "The throne sits empty"}</Text>
+                <Text style={[styles.entryMeta, { color: theme.inkMuted }]}>{ruler ? `Ruled by ${ruler.name}` : "The throne sits empty"}</Text>
                 <View style={styles.metricRow}>
-                  <Text style={{ color: theme.inkMuted, fontSize: 12 }}>Stability {kingdom.stability}</Text>
-                  <Text style={{ color: theme.inkMuted, fontSize: 12 }}>Treasury {kingdom.treasury}g</Text>
+                  <Text style={[styles.metric, { color: theme.inkMuted }]}>Stability {kingdom.stability}</Text>
+                  <Text style={[styles.metric, { color: theme.inkMuted }]}>Treasury {kingdom.treasury}g</Text>
                 </View>
-              </Panel>
+              </View>
             );
           })}
 
@@ -159,43 +154,43 @@ export default function WorldScreen() {
           (factions.length === 0 ? (
             <Text style={[styles.hint, { color: theme.inkMuted }]}>No factions vie for power yet.</Text>
           ) : (
-            factions.map((faction) => {
+            factions.map((faction, i) => {
               const home = faction.homeSettlementId ? world.settlements[faction.homeSettlementId] : undefined;
               const standing = faction.playerStanding;
               return (
-                <Panel key={faction.id} style={styles.card}>
-                  <View style={styles.cardHeaderRow}>
+                <View key={faction.id} style={[styles.entry, i > 0 && styles.entryDivider, { borderTopColor: theme.border }]}>
+                  <View style={styles.entryHead}>
                     <Ionicons name="flag" size={iconSize.standard} color={factionColor[faction.id] ?? theme.gold} />
-                    <Text style={[styles.cardTitle, { color: theme.ink }]}>{faction.name}</Text>
+                    <Text style={[styles.entryName, { color: theme.ink }]}>{faction.name}</Text>
                   </View>
-                  <Text style={{ color: theme.inkMuted, marginTop: 4 }}>Seat of power: {home?.name ?? "unknown"}</Text>
+                  <Text style={[styles.entryMeta, { color: theme.inkMuted }]}>Seat of power: {home?.name ?? "unknown"}</Text>
                   <View style={styles.metricRow}>
-                    <Text style={{ color: theme.inkMuted, fontSize: 12 }}>Power {faction.power}</Text>
-                    <Text style={{ color: standing >= 0 ? theme.forest : theme.wax, fontSize: 12 }}>
+                    <Text style={[styles.metric, { color: theme.inkMuted }]}>Power {faction.power}</Text>
+                    <Text style={[styles.metric, { color: standing >= 0 ? theme.forest : theme.wax }]}>
                       Standing {standing >= 0 ? `+${standing}` : standing}
                     </Text>
                   </View>
-                </Panel>
+                </View>
               );
             })
           ))}
 
         {tab === "locations" &&
-          settlements.map((settlement) => (
-            <Panel key={settlement.id} style={styles.card}>
-              <View style={styles.cardHeaderRow}>
+          settlements.map((settlement, i) => (
+            <View key={settlement.id} style={[styles.entry, i > 0 && styles.entryDivider, { borderTopColor: theme.border }]}>
+              <View style={styles.entryHead}>
                 <Ionicons name={settlement.type === "city" ? "business" : "home"} size={iconSize.standard} color={theme.gold} />
-                <Text style={[styles.cardTitle, { color: theme.ink }]}>{settlement.name}</Text>
-                {settlement.destroyed && <Text style={{ color: theme.wax, fontWeight: "700", fontSize: 12 }}>DESTROYED</Text>}
+                <Text style={[styles.entryName, { color: theme.ink }]}>{settlement.name}</Text>
+                {settlement.destroyed && <Text style={[styles.destroyed, { color: theme.wax }]}>DESTROYED</Text>}
               </View>
-              <Text style={{ color: theme.inkMuted, marginTop: 4, textTransform: "capitalize" }}>
+              <Text style={[styles.entryMeta, { color: theme.inkMuted }]}>
                 {settlement.type} · population {settlement.population}
               </Text>
               <View style={styles.metricRow}>
-                <Text style={{ color: theme.inkMuted, fontSize: 12 }}>Prosperity {settlement.prosperity}</Text>
-                <Text style={{ color: theme.inkMuted, fontSize: 12 }}>Road safety {settlement.roadSafety}</Text>
+                <Text style={[styles.metric, { color: theme.inkMuted }]}>Prosperity {settlement.prosperity}</Text>
+                <Text style={[styles.metric, { color: theme.inkMuted }]}>Road safety {settlement.roadSafety}</Text>
               </View>
-            </Panel>
+            </View>
           ))}
       </ScrollView>
     </ScreenContainer>
@@ -203,31 +198,26 @@ export default function WorldScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontWeight: "800", marginTop: 4, marginBottom: 12 },
+  title: { fontWeight: "800", marginTop: 4, marginBottom: spacing.md },
   titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  tabRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
-  tabChip: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderRadius: radii.pill,
-    paddingVertical: 8,
-  },
-  tabLabel: { fontSize: 11, fontWeight: "700" },
-  scrollContent: { paddingBottom: 24 },
-  map: { width: "100%", aspectRatio: 0.8, marginBottom: spacing.md },
+  segment: { flexDirection: "row", borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.sm, padding: 3, marginBottom: spacing.lg },
+  segmentBtn: { flex: 1, paddingVertical: 8, borderRadius: radii.xs, alignItems: "center" },
+  segmentLabel: { fontWeight: "700", fontSize: 12, letterSpacing: 0.3 },
+  scroll: { paddingBottom: spacing.xxl },
+  map: { width: "100%", aspectRatio: 0.85, marginBottom: spacing.md },
   mapImage: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth * 2 },
   marker: { position: "absolute", alignItems: "center", transform: [{ translateX: -18 }, { translateY: -18 }] },
   markerPin: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
   markerLabel: { marginTop: 3, borderRadius: radii.xs, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 5, paddingVertical: 1, maxWidth: 96 },
   markerText: { fontSize: 10, fontWeight: "700" },
-  detailCard: { marginBottom: 12 },
-  hint: { fontStyle: "italic", textAlign: "center", marginTop: 8 },
-  card: { marginBottom: 12 },
-  cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  cardTitle: { fontWeight: "700", fontSize: 16, flex: 1 },
-  metricRow: { flexDirection: "row", gap: 16, marginTop: 8 },
+  hint: { fontStyle: "italic", textAlign: "center", marginTop: spacing.sm },
+  detail: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.md },
+  entry: { paddingVertical: spacing.md },
+  entryDivider: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 2 },
+  entryHead: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  entryName: { fontWeight: "700", fontSize: 16, flex: 1, fontFamily: fontFamily.display },
+  destroyed: { fontWeight: "700", fontSize: 11, letterSpacing: 1 },
+  entryMeta: { marginTop: 4, textTransform: "capitalize", fontSize: 13 },
+  metricRow: { flexDirection: "row", gap: spacing.lg, marginTop: spacing.sm },
+  metric: { fontSize: 12 },
 });
