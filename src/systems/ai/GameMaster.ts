@@ -2,6 +2,7 @@ import type { AIProvider, ProviderRequest } from "./providers/AIProvider";
 import type {
   DialogueOutput,
   DialogueRequest,
+  GmProposal,
   GmProposalBatch,
   GmResult,
   NarrationOutput,
@@ -11,6 +12,7 @@ import type {
   RumorRequest,
 } from "./contract/GmOutput";
 import { GM_OUTPUT_SCHEMA_VERSION } from "./contract/GmOutput";
+import { parseProposal, parseProposalBatch } from "./contract/schema";
 import type { GmContext } from "./context/GmContext";
 
 export interface RumorOutput {
@@ -38,43 +40,82 @@ export class GameMaster {
 
   async narrate(req: NarrationRequest): Promise<GmResult<NarrationOutput>> {
     const fallback = fallbackNarration(req.context);
-    const res = await this.tryProvider({ operation: "narrate", system: "", user: "", expectJson: false });
-    return res.ok ? { ok: true, source: "fallback", value: fallback } : { ok: false, source: "fallback", reason: res.reason, fallback };
-    // NOTE: even the "ok" provider branch returns fallback in 3B-1 — no real
-    // provider exists yet, so nothing else can be produced.
+    const res = await this.tryProvider({
+      operation: "narrate",
+      system: "",
+      user: "",
+      expectJson: false,
+      context: req.context,
+      ...(req.prompt !== undefined ? { playerLine: req.prompt } : {}),
+    });
+    if (res.ok) {
+      const parsed = parseNarrationText(res.text);
+      if (parsed) return { ok: true, source: "ai", value: parsed };
+      return { ok: false, source: "fallback", reason: "unparseable narration", fallback };
+    }
+    return { ok: false, source: "fallback", reason: res.reason, fallback };
   }
 
   async converse(req: DialogueRequest): Promise<GmResult<DialogueOutput>> {
     const fallback = fallbackDialogue(req);
-    const res = await this.tryProvider({ operation: "dialogue", system: "", user: "", expectJson: true });
-    return res.ok ? { ok: true, source: "fallback", value: fallback } : { ok: false, source: "fallback", reason: res.reason, fallback };
+    const res = await this.tryProvider({
+      operation: "dialogue",
+      system: "",
+      user: "",
+      expectJson: true,
+      context: req.context,
+      npcId: req.npcId,
+      ...(req.playerLine !== undefined ? { playerLine: req.playerLine } : {}),
+    });
+    if (res.ok) {
+      const parsed = parseDialogueText(res.text);
+      if (parsed) return { ok: true, source: "ai", value: parsed };
+      return { ok: false, source: "fallback", reason: "unparseable dialogue", fallback };
+    }
+    return { ok: false, source: "fallback", reason: res.reason, fallback };
   }
 
-  async proposeQuest(_req: QuestProposalRequest): Promise<GmResult<GmProposalBatch>> {
+  async proposeQuest(req: QuestProposalRequest): Promise<GmResult<GmProposalBatch>> {
     const fallback = emptyBatch();
-    const res = await this.tryProvider({ operation: "propose_quest", system: "", user: "", expectJson: true });
-    return res.ok ? { ok: true, source: "fallback", value: fallback } : { ok: false, source: "fallback", reason: res.reason, fallback };
+    const res = await this.tryProvider({ operation: "propose_quest", system: "", user: "", expectJson: true, context: req.context });
+    if (res.ok) {
+      const parsed = parseProposalBatch(res.text);
+      if (parsed) return { ok: true, source: "ai", value: parsed };
+      return { ok: false, source: "fallback", reason: "unparseable batch", fallback };
+    }
+    return { ok: false, source: "fallback", reason: res.reason, fallback };
   }
 
-  async proposeRumor(_req: RumorRequest): Promise<GmResult<RumorOutput>> {
+  async proposeRumor(req: RumorRequest): Promise<GmResult<RumorOutput>> {
     const fallback: RumorOutput = { schemaVersion: GM_OUTPUT_SCHEMA_VERSION, text: "" };
-    const res = await this.tryProvider({ operation: "rumor", system: "", user: "", expectJson: true });
-    return res.ok ? { ok: true, source: "fallback", value: fallback } : { ok: false, source: "fallback", reason: res.reason, fallback };
+    const res = await this.tryProvider({ operation: "rumor", system: "", user: "", expectJson: true, context: req.context });
+    if (res.ok) {
+      const parsed = parseRumorText(res.text);
+      if (parsed) return { ok: true, source: "ai", value: parsed };
+      return { ok: false, source: "fallback", reason: "unparseable rumor", fallback };
+    }
+    return { ok: false, source: "fallback", reason: res.reason, fallback };
   }
 
-  async reactToPlayerAction(_req: PlayerActionRequest): Promise<GmResult<GmProposalBatch>> {
+  async reactToPlayerAction(req: PlayerActionRequest): Promise<GmResult<GmProposalBatch>> {
     const fallback = emptyBatch();
-    const res = await this.tryProvider({ operation: "player_action", system: "", user: "", expectJson: true });
-    return res.ok ? { ok: true, source: "fallback", value: fallback } : { ok: false, source: "fallback", reason: res.reason, fallback };
+    const res = await this.tryProvider({ operation: "player_action", system: "", user: "", expectJson: true, context: req.context, actionText: req.actionText });
+    if (res.ok) {
+      const parsed = parseProposalBatch(res.text);
+      if (parsed) return { ok: true, source: "ai", value: parsed };
+      return { ok: false, source: "fallback", reason: "unparseable batch", fallback };
+    }
+    return { ok: false, source: "fallback", reason: res.reason, fallback };
   }
 
-  private async tryProvider(req: ProviderRequest): Promise<{ ok: true } | { ok: false; reason: string }> {
+  private async tryProvider(req: ProviderRequest): Promise<{ ok: true; text: string } | { ok: false; reason: string }> {
     if (!this.provider.isConfigured()) return { ok: false, reason: "provider not configured" };
     const response = await this.provider.complete(req);
-    // In 3B-1 the offline provider always returns not-ok; treat any failure as
-    // "use fallback". A real provider's success will be parsed/validated in 3C.
+    // Any provider failure -> deterministic fallback. On success we hand the
+    // raw (already gateway-validated) text back to the caller for parsing; the
+    // GameMaster itself never applies anything (see applyProposals for that).
     if (!response.ok) return { ok: false, reason: response.reason };
-    return { ok: false, reason: "no-op: provider output handling arrives in Phase 3C" };
+    return { ok: true, text: response.text };
   }
 }
 
@@ -102,4 +143,45 @@ function fallbackDialogue(req: DialogueRequest): DialogueOutput {
 
 function emptyBatch(): GmProposalBatch {
   return { schemaVersion: GM_OUTPUT_SCHEMA_VERSION, proposals: [] };
+}
+
+// --- Lightweight parsers for gateway-validated output -----------------------
+// The gateway already validated this text server-side; these guards simply
+// re-shape it into typed values (and stay defensive against malformed input).
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function tryJson(text: string): unknown | undefined {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+function parseNarrationText(text: string): NarrationOutput | null {
+  const j = tryJson(text);
+  if (!isObject(j) || typeof j.narrative !== "string") return null;
+  return {
+    schemaVersion: GM_OUTPUT_SCHEMA_VERSION,
+    narrative: j.narrative,
+    ...(typeof j.tone === "string" ? { tone: j.tone as NarrationOutput["tone"] } : {}),
+  };
+}
+
+function parseDialogueText(text: string): DialogueOutput | null {
+  const j = tryJson(text);
+  if (!isObject(j) || typeof j.speakerNpcId !== "string" || typeof j.line !== "string") return null;
+  const proposals: GmProposal[] = Array.isArray(j.proposals)
+    ? j.proposals.map((p) => parseProposal(p)).filter((p): p is GmProposal => p !== null)
+    : [];
+  return { schemaVersion: GM_OUTPUT_SCHEMA_VERSION, speakerNpcId: j.speakerNpcId, line: j.line, proposals };
+}
+
+function parseRumorText(text: string): RumorOutput | null {
+  const j = tryJson(text);
+  if (!isObject(j) || typeof j.text !== "string") return null;
+  return { schemaVersion: GM_OUTPUT_SCHEMA_VERSION, text: j.text };
 }
