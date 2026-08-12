@@ -1,11 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, ImageSourcePropType } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/useTheme";
 import { fontFamily, radii, scaledFontSize, spacing, typeScale } from "../../theme/theme";
 import { JournalTriggerButton } from "../JournalTriggerButton";
-
-const SETTLEMENT_ART = require("../../../../assets/journey/town-settlement.png");
+import { GENERIC_SETTLEMENT_ART } from "./locationArtwork";
 
 interface LocationBannerProps {
   locationName: string;
@@ -16,6 +15,8 @@ interface LocationBannerProps {
   statusWarning: boolean;
   height: number;
   imageWidth: number;
+  /** Resolved hero artwork; falls back to the generic settlement vista. */
+  artworkSource?: ImageSourcePropType;
 }
 
 /**
@@ -29,7 +30,7 @@ export function LocationBanner(props: LocationBannerProps) {
   const theme = useTheme();
   return (
     <View style={[styles.frame, { width: Math.min(props.imageWidth, 760), borderColor: theme.goldBorder, height: props.height }]}>
-      <Image source={SETTLEMENT_ART} style={styles.bgImage} resizeMode="cover" />
+      <Image source={props.artworkSource ?? GENERIC_SETTLEMENT_ART} style={styles.bgImage} resizeMode="cover" />
       <View style={[styles.scrim, styles.scrimTop]} />
       <View style={[styles.scrim, styles.scrimBottom]} />
 

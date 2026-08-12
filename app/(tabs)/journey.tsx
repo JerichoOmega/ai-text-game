@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { useWorldStore } from "@/state/useWorldStore";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
 import { LocationBanner } from "@/presentation/components/journey/LocationBanner";
+import { getLocationArtwork } from "@/presentation/components/journey/locationArtwork";
 import { CurrentJourney } from "@/presentation/components/journey/CurrentJourney";
 import { PeopleSection } from "@/presentation/components/journey/PeopleSection";
 import { RecentEvents } from "@/presentation/components/journey/RecentEvents";
@@ -129,6 +130,7 @@ export default function JourneyScreen() {
           statusWarning={status.warning}
           height={wide ? 300 : 200}
           imageWidth={Math.max(320, width - spacing.lg * 2)}
+          artworkSource={getLocationArtwork(currentSettlement)}
         />
 
         {wide ? (
