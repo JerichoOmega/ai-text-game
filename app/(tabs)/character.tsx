@@ -47,6 +47,7 @@ export default function CharacterScreen() {
   const characterAbilities = player.characterAbilityIds.map(getAbility).filter(Boolean);
   const combatAbilities = player.combatAbilityIds.map(getAbility).filter(Boolean);
   const equipment = player.equipmentItemIds.map(getEquipment).filter(Boolean);
+  const equippedWeapon = equipment.find((e) => e && "attack" in e.modifiers) ?? equipment[0];
 
   const identityLine = `Level ${player.level} · ${race?.name ?? "Traveler"} · ${background?.name ?? "Wanderer"}`;
   const placeLine = `${settlement?.name ?? "The Wilds"} · ${capitalize(world.currentDate.season)} · ${capitalize(world.weather.current)}`;
@@ -104,7 +105,29 @@ export default function CharacterScreen() {
 
         {tab === "overview" && (
           <View>
-            <SectionLabel label="Abilities" tone="gold" />
+            <SectionLabel label="At a Glance" tone="gold" />
+            <View style={styles.glanceGrid}>
+              {STAT_ROWS.map((row) => (
+                <View key={row.key} style={styles.glanceItem}>
+                  <Ionicons name={row.icon} size={iconSize.inline} color={theme.bronze} />
+                  <Text style={[styles.glanceLabel, { color: theme.inkMuted }]} numberOfLines={1}>{row.label}</Text>
+                  <Text style={[styles.glanceValue, { color: theme.ink }]}>{effective[row.key]}</Text>
+                </View>
+              ))}
+            </View>
+            <View style={[styles.glanceMetaRow, { borderTopColor: theme.border }]}>
+              <View style={styles.glanceMetaItem}>
+                <Text style={[styles.metaKey, { color: theme.bronze }]}>Equipped</Text>
+                <Text style={[styles.metaVal, { color: theme.ink }]} numberOfLines={1}>{equippedWeapon ? equippedWeapon.name : "None"}</Text>
+              </View>
+              <View style={styles.glanceMetaItem}>
+                <Text style={[styles.metaKey, { color: theme.bronze }]}>Purse</Text>
+                <Text style={[styles.metaVal, { color: theme.gold }]}>{player.gold} gold</Text>
+              </View>
+            </View>
+
+            <View style={styles.abilitiesGap} />
+            <SectionLabel label="Abilities" />
             {characterAbilities.length === 0 && combatAbilities.length === 0 ? (
               <Text style={[styles.muted, { color: theme.inkMuted }]}>No abilities yet — you'll earn your first as you grow.</Text>
             ) : (
@@ -222,4 +245,13 @@ const styles = StyleSheet.create({
   dotLeader: { flex: 1, borderBottomWidth: StyleSheet.hairlineWidth, marginBottom: 5, opacity: 0.6 },
   purseGap: { height: spacing.xl },
   purseRow: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.sm },
+  glanceGrid: { flexDirection: "row", flexWrap: "wrap", rowGap: spacing.md, columnGap: spacing.sm },
+  glanceItem: { flexBasis: "31%", flexGrow: 1, flexDirection: "row", alignItems: "center", gap: 6 },
+  glanceLabel: { flex: 1, fontSize: 12, minWidth: 0 },
+  glanceValue: { fontWeight: "700", fontSize: 15 },
+  glanceMetaRow: { flexDirection: "row", gap: spacing.lg, marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth },
+  glanceMetaItem: { flex: 1, minWidth: 0 },
+  metaKey: { fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: "700", marginBottom: 3 },
+  metaVal: { fontSize: 14, fontWeight: "600" },
+  abilitiesGap: { height: spacing.xl },
 });
