@@ -1,5 +1,14 @@
 # Chronicle — PRD / Working Memory
 
+## Storybook UI Re-Anchor (2026-06, commit 5ce894f)
+Presentation-only shift from "dark RPG dashboard" toward an illuminated-chronicle/storybook feel. No gameplay/AI/state/db changes; AI OFF; data hooks & navigation unchanged; testIDs preserved.
+- **New `PageTabs` primitive**: serif chapter tabs with an underline on the active page sitting on a single thin brass rule (book-page tabs), replacing the modern filled segmented controls on Character/Chronicle/World. Same testIDs (`character-tab-*`/`character-tabs`, `chronicle-tab-*`, `world-tab-*`/`world-tab-row`).
+- **Prose serif**: narrative text now uses the Georgia serif (often italic) instead of sans — Journey quest summary, NPC spoken line, Chronicle news headlines + timeline entries, Character ability descriptions. Interface labels/metadata stay in the stronger face for contrast.
+- **Warm page surface**: `ChronicleBackground` scrim lightened (0.62→0.5) plus a faint warm top band so screens read as aged leaves rather than uniform black (subtle; harness renders the underlying texture dark regardless).
+- **Verified**: tsc 0 errors; 217/217 tests; `expo export --platform web` OK; SQLite guard passes. Live smoke on New Adventure confirmed serif title + italic narrative prose + brass-diamond section ornaments + gold-selected chips + warm tint all render. `PageTabs` is View-based (renders reliably) but could not be shown on a data-backed tabbed screen in-harness due to the recurring world-seed stall on the static server; low risk (gates pass). Bundled raster imagery (hero painting, brass icons, NPC portrait) remains UNCONFIRMED in-harness (documented image-loading artifact). Agent-tested only.
+- **Scope note**: this pass targeted the three highest-leverage "dashboard→book" levers (book tabs, prose serif, page warmth) on top of the already-completed IA reconstruction (open sections, drill-down tabs, hero regions). Deeper per-page illustrated recompositions remain available as follow-ups.
+
+
 ## UI Composition & Scale Corrections (2026-06, commit 989d88a)
 Presentation/layout-only fixes across Home, bottom nav, and the NPC interaction screen. No gameplay/AI/state/db changes; AI OFF.
 - **Home (`app/index.tsx`)**: artwork now has a dedicated hero region at the top (height = clamp(winH×0.42, 300, 520)) with the CHRONICLE wordmark/tagline anchored to its lower edge and a two-band fade into the surface; the navigation menu was moved onto a separate dark Chronicle surface BELOW the hero (previously the menu overlaid the painting). Continue remains the emphasized accent entry; others are open rows on brass rules.
