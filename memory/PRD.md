@@ -1,5 +1,27 @@
 # Chronicle — PRD / Working Memory
 
+## Journey UI — Targeted Polish & Correctness Pass (2026-06, commit dd9967d)
+Presentation-only refinement of the dark-fantasy Journey screen; no gameplay/AI changes (AI still OFF).
+- **Asset**: `assets/journey/eastbridge.png` → `assets/journey/town-settlement.png` (generic settlement art,
+  mockup-only, NOT canonical). `LocationBanner` require updated. No source refs to old name (the remaining
+  `eastbridge` hits in `seedWorld.ts` are the legit canonical settlement/kingdom/faction/history — untouched).
+- **People**: `PeopleSection` capped at 6 (removed the misleading "View all people (N)" link — the app has
+  NO NPC directory screen, so any nav target would be dishonest). `portraitForNpc()` preserved. `journey.tsx`
+  passes `limit={6}`, no `onViewAll`.
+- **Recent Events**: lightened to a borderless "open chronicle" feed (dropped the `OrnateFrame` box; subtle
+  left rule via `styles.feed`). Newest entry emphasized. "View Chronicle ›" → existing `routes.chronicle`.
+  Deterministic ordering: `year` desc, insertion-index tiebreak (history has only `year`, no date/timestamp).
+- **Current Journey action**: label/behavior honestly maps to `resolveQuestAffordance` — talk+here →
+  `Speak with X` (opens NPC route), else Travel/Deliver/Continue → quest screen. No invented mechanics.
+- **Banner data** (name/date/weather/stability) all sourced live from world state; Location kept as hero;
+  restrained crimson preserved; responsive desktop two-column / mobile single-column retained.
+- **Verified**: `tsc --noEmit` 0 errors; `yarn test` 213/213; `expo export --platform web` OK (SQLite guard
+  passes, no native symbols); `town-settlement.png` correctly hashed+bundled in dist. Live desktop smoke
+  confirmed full render (dynamic Eastbridge hero, 6 NPCs, Continue Journey, chronicle, Rest a Day, nav; no
+  console errors / external requests; AI OFF). Metro dev hero-art has a known asset-registration timing quirk
+  after file renames (needs `--clear`); production export is correct. Agent-tested only; no device confirmation.
+
+
 ## Inventory & Equipment (2026-06)
 Small text-first inventory; makes weapons/armor/shop purchases meaningful. Reuses the combat stat path.
 - **Audited conflict fixed**: shop and equipment used two id namespaces, so purchased gear did nothing.
