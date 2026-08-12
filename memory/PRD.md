@@ -1,5 +1,12 @@
 # Chronicle — PRD / Working Memory
 
+## UI Polish — Ornate Chronicle Section Rules (2026-06, commit 7eeee70)
+Small presentation-only refinement of the shared `SectionLabel` primitive. No gameplay/AI/state/db changes; AI OFF; no new dependency; brass icons untouched.
+- **Change**: the section rule evolved from a plain hairline to `LABEL ──── ✦ ────` — a restrained brass diamond (rotated 6px View, locked gold token, opacity ~0.8) centered between two flex hairlines, with the optional drill-down link preserved on the right.
+- **Implementation**: View-only (no asset, no dependency); wrapped in a `ruleWrap` flex row with `spacing.sm` gap so it doesn't inflate height or shift layout. Because every screen's section headers use this one primitive, the flourish propagates everywhere at once (Journey/Character/Chronicle/World/New Adventure).
+- **Verified**: tsc 0 errors; 217/217 tests; `expo export --platform web` OK; SQLite guard passes. Live smoke on New Adventure (renders without world-load) confirmed the ornament on all four section labels — subtle, centered, no layout shift, no extra vertical spacing. Since the ornament is a View (not a raster image) it renders reliably in the harness. Agent-tested.
+
+
 ## UI Polish — Handcrafted Brass Icon System (2026-06, commit cdff649)
 Presentation-only iconography pass on top of the reconstruction. No gameplay/AI/state/db changes; AI OFF; no new dependency.
 - **New**: `BrassIcon` component + 6 transparent brass PNGs in `assets/images/icons/` (ic_journey compass, ic_chronicle open book, ic_world globe, ic_character helmeted adventurer, ic_quest scroll, ic_rest hourglass). Icons carry their own brass color, so they're never tinted; active state is a restrained opacity lift.
