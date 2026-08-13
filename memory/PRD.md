@@ -269,3 +269,44 @@ layer only; gameplay/systems untouched.
   optional children + 2 trivial pre-existing errors (CombatEngine, eventBus test).
 - Verified: 30/30 tests, typecheck 0 errors, Metro bundles all 1139 modules.
   Native launch still blocked by aarch64 vs x86-64 hermesc (no on-device shots).
+
+## UI — Illustrated Storybook Composition Pass (2026-06, commit 1a49560, local only)
+Full screen-by-screen recomposition to move from "dark RPG dashboard" to
+"interactive illuminated fantasy chronicle." Presentation/IA only — no
+gameplay, state, data, persistence, or AI changes; AI remains OFF. All
+existing testIDs preserved; resolver/component APIs unchanged.
+- **Home (`app/index.tsx`)** — title page: hero art ~55% height with the
+  CHRONICLE wordmark + flourished tagline set over its lower edge (scrim
+  fade); boxed menu rows replaced by compact manuscript nav entries (serif
+  title + italic subtitle, hairline brass dividers, inline brass icon, no
+  icon wells / cards). Continue highlighted in gold. Inventory honest-disabled.
+- **Journey (`journey.tsx` + `LocationBanner`)** — chapter plate: clean
+  unobstructed settlement illustration with name + almanac line captioned
+  BELOW it (ornament rule); narrative quest prose; People converted to a
+  horizontal row of portrait medallions (`PeopleSection`); Recent Events
+  demoted below. Single centered column (maxWidth 720 on wide).
+- **Character (`character.tsx`)** — folio: medallion portrait, thin ledger
+  rows for At-a-Glance stats + equipped/purse (grid/box removed), book tabs.
+- **Chronicle (`chronicle.tsx`)** — manuscript: sigil-box rows removed;
+  centered YEAR · CATEGORY heading, small illuminated emblem, serif body,
+  ornament dividers between entries. Timeline = centered year headings + prose.
+- **World (`world.tsx`)** — atlas: map is a tall full-width plate (rounded
+  container removed); selected settlement rendered as a serif atlas caption
+  (factual data only, no invented lore) beneath the plate; lists are compact
+  manuscript entries.
+- **NPC (`app/npc/[id].tsx`)** — encounter page: ChronicleBackground added,
+  faint vignette behind a medium framed portrait (168→140), spoken line
+  opened into a borderless centered manuscript quote; manuscript reply lines.
+- **New Adventure (`new-adventure.tsx`)** — ledger: pill chips → underlined
+  serif manuscript selections (gold + brass underline when active). testIDs
+  race-/background-/motivation-* preserved.
+- **Bottom nav (`(tabs)/_layout.tsx`)** — slimmer leather-tab bar (height
+  58→50 + safe-area inset, icons 26→22, hairline brass top rule, labels 10px).
+- Verified: `tsc --noEmit` 0 errors; `yarn test` 217/217; `expo export
+  --platform web` OK; SQLite/native-symbol guard PASS. Live smoke: Home title
+  page confirmed in browser (manuscript nav, wordmark, flourish rendered).
+  NOT visually confirmed this session: Journey/Character/Chronicle/World/NPC
+  and New Adventure — the static-export screenshot harness cannot drive SPA
+  route navigation / world bootstrap and does not paint bundled raster art
+  (documented env limitation). These screens are code-, type-, test- and
+  build-validated only; real-device visual confirmation still pending.
