@@ -91,24 +91,31 @@ export default function CharacterScreen() {
         {tab === "overview" && (
           <View>
             <SectionLabel label="At a Glance" tone="gold" />
-            <View style={styles.glanceGrid}>
-              {STAT_ROWS.map((row) => (
-                <View key={row.key} style={styles.glanceItem}>
+            {STAT_ROWS.map((row) => (
+              <View key={row.key} style={styles.ledgerRow}>
+                <View style={styles.ledgerLabel}>
                   <Ionicons name={row.icon} size={iconSize.inline} color={theme.bronze} />
-                  <Text style={[styles.glanceLabel, { color: theme.inkMuted }]} numberOfLines={1}>{row.label}</Text>
-                  <Text style={[styles.glanceValue, { color: theme.ink }]}>{effective[row.key]}</Text>
+                  <Text style={{ color: theme.inkMuted }}>{row.label}</Text>
                 </View>
-              ))}
+                <Text style={[styles.dotLeader, { borderBottomColor: theme.border }]} />
+                <Text style={{ color: theme.ink, fontWeight: "700", fontSize: scaledFontSize(typeScale.body) }}>{effective[row.key]}</Text>
+              </View>
+            ))}
+            <View style={styles.ledgerRow}>
+              <View style={styles.ledgerLabel}>
+                <Ionicons name="hand-left" size={iconSize.inline} color={theme.bronze} />
+                <Text style={{ color: theme.inkMuted }}>Equipped</Text>
+              </View>
+              <Text style={[styles.dotLeader, { borderBottomColor: theme.border }]} />
+              <Text style={{ color: theme.ink, fontWeight: "600" }} numberOfLines={1}>{equippedWeapon ? equippedWeapon.name : "None"}</Text>
             </View>
-            <View style={[styles.glanceMetaRow, { borderTopColor: theme.border }]}>
-              <View style={styles.glanceMetaItem}>
-                <Text style={[styles.metaKey, { color: theme.bronze }]}>Equipped</Text>
-                <Text style={[styles.metaVal, { color: theme.ink }]} numberOfLines={1}>{equippedWeapon ? equippedWeapon.name : "None"}</Text>
+            <View style={styles.ledgerRow}>
+              <View style={styles.ledgerLabel}>
+                <Ionicons name="cash" size={iconSize.inline} color={theme.bronze} />
+                <Text style={{ color: theme.inkMuted }}>Purse</Text>
               </View>
-              <View style={styles.glanceMetaItem}>
-                <Text style={[styles.metaKey, { color: theme.bronze }]}>Purse</Text>
-                <Text style={[styles.metaVal, { color: theme.gold }]}>{player.gold} gold</Text>
-              </View>
+              <Text style={[styles.dotLeader, { borderBottomColor: theme.border }]} />
+              <Text style={{ color: theme.gold, fontWeight: "700" }}>{player.gold} gold</Text>
             </View>
 
             <View style={styles.abilitiesGap} />

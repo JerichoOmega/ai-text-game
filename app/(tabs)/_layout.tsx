@@ -43,14 +43,14 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: theme.surface,
           borderTopColor: theme.goldBorder,
-          borderTopWidth: StyleSheet.hairlineWidth * 2,
-          // Stable intentional height + device safe-area, so icons/labels are
+          borderTopWidth: StyleSheet.hairlineWidth,
+          // Slim leather-chronicle tabs + device safe-area, so icons/labels are
           // never clipped by the home indicator and content never sits under it.
-          height: 58 + insets.bottom,
-          paddingTop: 6,
-          paddingBottom: Math.max(insets.bottom, 8),
+          height: 50 + insets.bottom,
+          paddingTop: 5,
+          paddingBottom: Math.max(insets.bottom, 6),
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "700", letterSpacing: 0.8 },
         tabBarItemStyle: { paddingTop: 2 },
       }}
     >
@@ -58,28 +58,28 @@ export default function TabsLayout() {
         name="journey"
         options={{
           title: "Journey",
-          tabBarIcon: ({ focused, size }) => <BrassIcon name="journey" size={size ?? 26} active={focused} />,
+          tabBarIcon: ({ focused, size }) => <BrassIcon name="journey" size={size ?? 22} active={focused} />,
         }}
       />
       <Tabs.Screen
         name="character"
         options={{
           title: "Character",
-          tabBarIcon: ({ focused, size }) => <BrassIcon name="character" size={size ?? 26} active={focused} />,
+          tabBarIcon: ({ focused, size }) => <BrassIcon name="character" size={size ?? 22} active={focused} />,
         }}
       />
       <Tabs.Screen
         name="chronicle"
         options={{
           title: "Chronicle",
-          tabBarIcon: ({ focused, size }) => <BrassIcon name="chronicle" size={size ?? 26} active={focused} />,
+          tabBarIcon: ({ focused, size }) => <BrassIcon name="chronicle" size={size ?? 22} active={focused} />,
         }}
       />
       <Tabs.Screen
         name="world"
         options={{
           title: "World",
-          tabBarIcon: ({ focused, size }) => <BrassIcon name="world" size={size ?? 26} active={focused} />,
+          tabBarIcon: ({ focused, size }) => <BrassIcon name="world" size={size ?? 22} active={focused} />,
         }}
       />
     </Tabs>

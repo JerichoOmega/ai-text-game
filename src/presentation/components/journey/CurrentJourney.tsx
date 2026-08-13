@@ -43,7 +43,7 @@ export function CurrentJourney({ title, summary, objectives, actionLabel, onPres
           {title}
         </Text>
       </View>
-      <Text style={[styles.summary, { color: theme.inkMuted, fontFamily: fontFamily.display, fontSize: scaledFontSize(typeScale.caption) }]} numberOfLines={3}>
+      <Text style={[styles.summary, { color: theme.inkMuted, fontFamily: fontFamily.display, fontSize: scaledFontSize(typeScale.body) }]} numberOfLines={5}>
         {summary}
       </Text>
 
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   crest: { marginTop: 1 },
   title: { flex: 1, lineHeight: 24 },
-  summary: { marginTop: spacing.xs, lineHeight: 19 },
+  summary: { marginTop: spacing.sm, lineHeight: 23 },
   progressRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginTop: spacing.md },
   track: { flex: 1, height: 3, borderRadius: 2, overflow: "hidden" },
   fill: { height: "100%", borderRadius: 2 },

@@ -46,16 +46,20 @@ export default function NewAdventureScreen() {
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       testID={testID}
-      style={({ pressed }) => [
-        styles.chip,
-        {
-          borderColor: active ? theme.gold : theme.goldBorder,
-          backgroundColor: active ? theme.gold : "transparent",
-          opacity: pressed ? 0.85 : 1,
-        },
-      ]}
+      style={({ pressed }) => [styles.option, { opacity: pressed ? 0.6 : 1 }]}
     >
-      <Text style={{ color: active ? theme.background : theme.ink, fontWeight: active ? "700" : "500", letterSpacing: 0.3 }}>{label}</Text>
+      <Text
+        style={[
+          styles.optionText,
+          {
+            color: active ? theme.gold : theme.inkMuted,
+            fontFamily: active ? fontFamily.displayBold : fontFamily.display,
+          },
+        ]}
+      >
+        {label}
+      </Text>
+      <View style={[styles.optionRule, { backgroundColor: active ? theme.gold : "transparent" }]} />
     </Pressable>
   );
 
@@ -153,8 +157,10 @@ const styles = StyleSheet.create({
   intro: { fontSize: 14, lineHeight: 21, fontStyle: "italic", marginBottom: spacing.xl },
   input: { fontSize: 26, fontWeight: "700", paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth * 2 },
   groupGap: { height: spacing.xl },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  chip: { borderWidth: StyleSheet.hairlineWidth * 2, borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, minHeight: 40, justifyContent: "center" },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", columnGap: spacing.xl, rowGap: spacing.md },
+  option: { alignItems: "center", paddingVertical: spacing.xs },
+  optionText: { fontSize: 18, letterSpacing: 0.5 },
+  optionRule: { height: 2, borderRadius: 1, alignSelf: "stretch", marginTop: 4, minWidth: 24 },
   help: { fontSize: 13, lineHeight: 19, marginTop: spacing.md, fontStyle: "italic" },
   warningRow: { flexDirection: "row", gap: spacing.sm, alignItems: "flex-start", marginTop: spacing.xxl },
   warningText: { flex: 1, fontSize: 12, lineHeight: 18 },

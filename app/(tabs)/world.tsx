@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, ScrollView, Pressable, ImageBackground } from "
 import { Ionicons } from "@expo/vector-icons";
 import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
-import { fontFamily, scaledFontSize, typeScale, iconSize, radii, spacing } from "@/presentation/theme/theme";
+import { fontFamily, scaledFontSize, typeScale, iconSize, spacing } from "@/presentation/theme/theme";
 import { JournalTriggerButton } from "@/presentation/components/JournalTriggerButton";
 import { PageTabs } from "@/presentation/components/PageTabs";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
+import { capitalize } from "@/utils/format";
 import type { Settlement } from "@/domain/types";
 
 const MAP_IMAGE = require("../../assets/images/world-map.jpg");
@@ -33,6 +34,17 @@ const MARKER_SLOTS = [
 ];
 
 const FACTION_COLORS = ["#A5453F", "#4F6FA3", "#4F8A5B", "#8A6BB0", "#B0873F"];
+
+/** A restrained illuminated flourish used as an atlas caption rule. */
+function Flourish({ color, gold }: { color: string; gold: string }) {
+  return (
+    <View style={styles.flourish}>
+      <View style={[styles.flRule, { backgroundColor: color }]} />
+      <View style={[styles.flDiamond, { backgroundColor: gold }]} />
+      <View style={[styles.flRule, { backgroundColor: color }]} />
+    </View>
+  );
+}
 
 export default function WorldScreen() {
   const theme = useTheme();
@@ -70,6 +82,7 @@ export default function WorldScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {tab === "map" && (
           <>
+            {/* The atlas plate — the illustration is the centerpiece. */}
             <ImageBackground source={MAP_IMAGE} style={styles.map} imageStyle={[styles.mapImage, { borderColor: theme.goldBorder }]} resizeMode="cover">
               {settlements.map((s, i) => {
                 const slot = MARKER_SLOTS[i % MARKER_SLOTS.length]!;
@@ -95,24 +108,23 @@ export default function WorldScreen() {
               })}
             </ImageBackground>
 
+            {/* Atlas caption — a manuscript note beneath the plate, not a boxed card. */}
             {selected ? (
-              <View style={[styles.detail, { borderTopColor: theme.goldBorder }]}>
-                <View style={styles.entryHead}>
-                  <Ionicons name={selected.type === "city" ? "business" : "home"} size={iconSize.standard} color={markerColor(selected)} />
-                  <Text style={[styles.entryName, { color: theme.ink }]}>{selected.name}</Text>
-                  {selected.destroyed && <Text style={[styles.destroyed, { color: theme.wax }]}>DESTROYED</Text>}
-                </View>
-                <Text style={[styles.entryMeta, { color: theme.inkMuted }]}>
-                  {selected.type}
-                  {selected.controllingFactionId ? ` · ${world.factions[selected.controllingFactionId]?.name ?? "unaligned"}` : " · unaligned"}
+              <View style={styles.caption}>
+                <Text style={[styles.captionName, { color: theme.gold, fontFamily: fontFamily.displayBold }]} numberOfLines={1}>
+                  {selected.name}
+                  {selected.destroyed ? " — in ruins" : ""}
                 </Text>
-                <View style={styles.metricRow}>
-                  <Text style={[styles.metric, { color: theme.inkMuted }]}>Prosperity {selected.prosperity}</Text>
-                  <Text style={[styles.metric, { color: theme.inkMuted }]}>Road safety {selected.roadSafety}</Text>
-                </View>
+                <Flourish color={theme.goldBorder} gold={theme.gold} />
+                <Text style={[styles.captionText, { color: theme.inkMuted, fontFamily: fontFamily.display }]}>
+                  {`A ${selected.type} of ${selected.population} souls, ${selected.controllingFactionId ? `held by ${world.factions[selected.controllingFactionId]?.name ?? "an unknown power"}` : "unaligned to any banner"}.`}
+                </Text>
+                <Text style={[styles.captionMetrics, { color: theme.bronze }]}>
+                  Prosperity {selected.prosperity} · Road safety {selected.roadSafety}
+                </Text>
               </View>
             ) : (
-              <Text style={[styles.hint, { color: theme.inkMuted }]}>Tap a marker to inspect a settlement.</Text>
+              <Text style={[styles.hint, { color: theme.inkMuted }]}>Tap a marker to read its entry in the atlas.</Text>
             )}
           </>
         )}
@@ -121,16 +133,13 @@ export default function WorldScreen() {
           kingdoms.map((kingdom, i) => {
             const ruler = kingdom.rulerId ? world.npcs[kingdom.rulerId] : undefined;
             return (
-              <View key={kingdom.id} style={[styles.entry, i > 0 && styles.entryDivider, { borderTopColor: theme.border }]}>
+              <View key={kingdom.id} style={[styles.entry, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border }]}>
                 <View style={styles.entryHead}>
                   <Ionicons name="shield" size={iconSize.standard} color={theme.gold} />
                   <Text style={[styles.entryName, { color: theme.ink }]}>{kingdom.name}</Text>
                 </View>
                 <Text style={[styles.entryMeta, { color: theme.inkMuted }]}>{ruler ? `Ruled by ${ruler.name}` : "The throne sits empty"}</Text>
-                <View style={styles.metricRow}>
-                  <Text style={[styles.metric, { color: theme.inkMuted }]}>Stability {kingdom.stability}</Text>
-                  <Text style={[styles.metric, { color: theme.inkMuted }]}>Treasury {kingdom.treasury}g</Text>
-                </View>
+                <Text style={[styles.entryMetrics, { color: theme.bronze }]}>Stability {kingdom.stability} · Treasury {kingdom.treasury}g</Text>
               </View>
             );
           })}
@@ -143,18 +152,15 @@ export default function WorldScreen() {
               const home = faction.homeSettlementId ? world.settlements[faction.homeSettlementId] : undefined;
               const standing = faction.playerStanding;
               return (
-                <View key={faction.id} style={[styles.entry, i > 0 && styles.entryDivider, { borderTopColor: theme.border }]}>
+                <View key={faction.id} style={[styles.entry, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border }]}>
                   <View style={styles.entryHead}>
                     <Ionicons name="flag" size={iconSize.standard} color={factionColor[faction.id] ?? theme.gold} />
                     <Text style={[styles.entryName, { color: theme.ink }]}>{faction.name}</Text>
                   </View>
                   <Text style={[styles.entryMeta, { color: theme.inkMuted }]}>Seat of power: {home?.name ?? "unknown"}</Text>
-                  <View style={styles.metricRow}>
-                    <Text style={[styles.metric, { color: theme.inkMuted }]}>Power {faction.power}</Text>
-                    <Text style={[styles.metric, { color: standing >= 0 ? theme.forest : theme.wax }]}>
-                      Standing {standing >= 0 ? `+${standing}` : standing}
-                    </Text>
-                  </View>
+                  <Text style={[styles.entryMetrics, { color: standing >= 0 ? theme.forest : theme.wax }]}>
+                    Power {faction.power} · Standing {standing >= 0 ? `+${standing}` : standing}
+                  </Text>
                 </View>
               );
             })
@@ -162,19 +168,16 @@ export default function WorldScreen() {
 
         {tab === "locations" &&
           settlements.map((settlement, i) => (
-            <View key={settlement.id} style={[styles.entry, i > 0 && styles.entryDivider, { borderTopColor: theme.border }]}>
+            <View key={settlement.id} style={[styles.entry, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border }]}>
               <View style={styles.entryHead}>
                 <Ionicons name={settlement.type === "city" ? "business" : "home"} size={iconSize.standard} color={theme.gold} />
                 <Text style={[styles.entryName, { color: theme.ink }]}>{settlement.name}</Text>
                 {settlement.destroyed && <Text style={[styles.destroyed, { color: theme.wax }]}>DESTROYED</Text>}
               </View>
               <Text style={[styles.entryMeta, { color: theme.inkMuted }]}>
-                {settlement.type} · population {settlement.population}
+                {capitalize(settlement.type)} · population {settlement.population}
               </Text>
-              <View style={styles.metricRow}>
-                <Text style={[styles.metric, { color: theme.inkMuted }]}>Prosperity {settlement.prosperity}</Text>
-                <Text style={[styles.metric, { color: theme.inkMuted }]}>Road safety {settlement.roadSafety}</Text>
-              </View>
+              <Text style={[styles.entryMetrics, { color: theme.bronze }]}>Prosperity {settlement.prosperity} · Road safety {settlement.roadSafety}</Text>
             </View>
           ))}
       </ScrollView>
@@ -185,24 +188,29 @@ export default function WorldScreen() {
 const styles = StyleSheet.create({
   title: { fontWeight: "800", marginTop: 4, marginBottom: spacing.md },
   titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  segment: { flexDirection: "row", borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.sm, padding: 3, marginBottom: spacing.lg },
-  segmentBtn: { flex: 1, paddingVertical: 8, borderRadius: radii.xs, alignItems: "center" },
-  segmentLabel: { fontWeight: "700", fontSize: 12, letterSpacing: 0.3 },
   scroll: { paddingBottom: spacing.xxl },
-  map: { width: "100%", aspectRatio: 0.85, marginBottom: spacing.md },
-  mapImage: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth * 2 },
+  map: { width: "100%", aspectRatio: 0.82, marginBottom: spacing.lg },
+  mapImage: { borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth },
   marker: { position: "absolute", alignItems: "center", transform: [{ translateX: -18 }, { translateY: -18 }] },
   markerPin: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  markerLabel: { marginTop: 3, borderRadius: radii.xs, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 5, paddingVertical: 1, maxWidth: 96 },
+  markerLabel: { marginTop: 3, borderRadius: 4, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 5, paddingVertical: 1, maxWidth: 96 },
   markerText: { fontSize: 10, fontWeight: "700" },
   hint: { fontStyle: "italic", textAlign: "center", marginTop: spacing.sm },
-  detail: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.md },
+
+  // Atlas caption
+  caption: { alignItems: "center", paddingHorizontal: spacing.lg, paddingTop: spacing.xs },
+  captionName: { fontSize: 22, fontWeight: "800", letterSpacing: 0.5, textAlign: "center" },
+  captionText: { fontSize: 15, lineHeight: 23, textAlign: "center", fontStyle: "italic", marginBottom: spacing.sm },
+  captionMetrics: { fontSize: 12, letterSpacing: 0.5, textAlign: "center" },
+  flourish: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm, marginVertical: spacing.sm },
+  flRule: { width: 40, height: StyleSheet.hairlineWidth, opacity: 0.7 },
+  flDiamond: { width: 5, height: 5, transform: [{ rotate: "45deg" }], opacity: 0.85 },
+
+  // Manuscript list entries
   entry: { paddingVertical: spacing.md },
-  entryDivider: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 2 },
   entryHead: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  entryName: { fontWeight: "700", fontSize: 16, flex: 1, fontFamily: fontFamily.display },
+  entryName: { fontWeight: "700", fontSize: 17, flex: 1, fontFamily: fontFamily.display },
   destroyed: { fontWeight: "700", fontSize: 11, letterSpacing: 1 },
-  entryMeta: { marginTop: 4, textTransform: "capitalize", fontSize: 13 },
-  metricRow: { flexDirection: "row", gap: spacing.lg, marginTop: spacing.sm },
-  metric: { fontSize: 12 },
+  entryMeta: { marginTop: 4, textTransform: "capitalize", fontSize: 13, fontStyle: "italic" },
+  entryMetrics: { marginTop: spacing.xs, fontSize: 12, letterSpacing: 0.3 },
 });

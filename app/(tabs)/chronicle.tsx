@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorldStore } from "@/state/useWorldStore";
 import { useTheme } from "@/presentation/theme/useTheme";
-import { fontFamily, scaledFontSize, typeScale, radii, spacing, historyCategoryColor } from "@/presentation/theme/theme";
+import { fontFamily, scaledFontSize, typeScale, spacing, historyCategoryColor } from "@/presentation/theme/theme";
 import { JournalTriggerButton } from "@/presentation/components/JournalTriggerButton";
 import { PageTabs } from "@/presentation/components/PageTabs";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
@@ -20,6 +20,17 @@ const CATEGORY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 
 function categoryColor(category: keyof typeof historyCategoryColor): string {
   return historyCategoryColor[category] ?? historyCategoryColor.political;
+}
+
+/** A restrained illuminated flourish between manuscript entries. */
+function OrnamentDivider({ color, gold }: { color: string; gold: string }) {
+  return (
+    <View style={styles.divider}>
+      <View style={[styles.divRule, { backgroundColor: color }]} />
+      <View style={[styles.divDiamond, { backgroundColor: gold }]} />
+      <View style={[styles.divRule, { backgroundColor: color }]} />
+    </View>
+  );
 }
 
 export default function ChronicleScreen() {
@@ -69,59 +80,59 @@ export default function ChronicleScreen() {
           (newsOrder.length === 0 ? (
             <Text style={[styles.empty, { color: theme.inkMuted }]}>History hasn't been written yet.</Text>
           ) : (
-            newsOrder.map((entry, i) => {
-              const latest = i === 0;
-              const color = categoryColor(entry.category);
-              return (
-                <View
-                  key={entry.id}
-                  style={[styles.newsRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border }]}
-                >
-                  <View style={[styles.sigil, { borderColor: color }]}>
-                    <Ionicons name={CATEGORY_ICON[entry.category] ?? "ellipse-outline"} size={latest ? 18 : 15} color={color} />
-                  </View>
-                  <View style={styles.newsText}>
-                    <Text style={[styles.metaLine, { color: theme.bronze }]}>
+            <View style={styles.leaf}>
+              {newsOrder.map((entry, i) => {
+                const latest = i === 0;
+                const color = categoryColor(entry.category);
+                return (
+                  <View key={entry.id} style={styles.entry}>
+                    {i > 0 && <OrnamentDivider color={theme.goldBorder} gold={theme.gold} />}
+                    <Text style={[styles.meta, { color: theme.bronze }]}>
                       Year {entry.year} · {entry.category}
                     </Text>
+                    <View style={styles.emblem}>
+                      <Ionicons name={CATEGORY_ICON[entry.category] ?? "ellipse-outline"} size={latest ? 22 : 18} color={color} />
+                    </View>
                     <Text
                       style={[
-                        styles.headline,
+                        styles.body,
                         {
                           color: latest ? theme.ink : theme.inkMuted,
                           fontFamily: latest ? fontFamily.displayBold : fontFamily.display,
                           fontSize: scaledFontSize(latest ? typeScale.title : typeScale.body),
+                          lineHeight: latest ? 28 : 24,
                         },
                       ]}
                     >
                       {entry.headline}
                     </Text>
                   </View>
-                </View>
-              );
-            })
+                );
+              })}
+            </View>
           ))}
 
         {tab === "timeline" &&
           (byYear.length === 0 ? (
             <Text style={[styles.empty, { color: theme.inkMuted }]}>The timeline is still empty.</Text>
           ) : (
-            byYear.map(([year, entries]) => (
-              <View key={year} style={styles.yearBlock}>
-                <Text style={[styles.year, { color: theme.gold, fontFamily: fontFamily.displayBold }]}>Year {year}</Text>
-                <View style={[styles.rail, { borderLeftColor: theme.goldBorder }]}>
+            <View style={styles.leaf}>
+              {byYear.map(([year, entries], gi) => (
+                <View key={year} style={styles.yearBlock}>
+                  {gi > 0 && <OrnamentDivider color={theme.goldBorder} gold={theme.gold} />}
+                  <Text style={[styles.year, { color: theme.gold, fontFamily: fontFamily.displayBold }]}>Year {year}</Text>
                   {entries.map((entry) => {
                     const color = categoryColor(entry.category);
                     return (
                       <View key={entry.id} style={styles.railRow}>
-                        <View style={[styles.node, { backgroundColor: theme.background, borderColor: color }]} />
-                        <Text style={[styles.railHeadline, { color: theme.ink }]}>{entry.headline}</Text>
+                        <View style={[styles.node, { backgroundColor: color }]} />
+                        <Text style={[styles.railHeadline, { color: theme.ink, fontFamily: fontFamily.display }]}>{entry.headline}</Text>
                       </View>
                     );
                   })}
                 </View>
-              </View>
-            ))
+              ))}
+            </View>
           ))}
       </ScrollView>
     </ScreenContainer>
@@ -131,22 +142,25 @@ export default function ChronicleScreen() {
 const styles = StyleSheet.create({
   title: { fontWeight: "800", marginTop: 4, marginBottom: spacing.md },
   titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  segment: { flexDirection: "row", borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.sm, padding: 3, marginBottom: spacing.lg },
-  segmentBtn: { flex: 1, paddingVertical: 9, borderRadius: radii.xs, alignItems: "center" },
-  segmentLabel: { fontWeight: "700", fontSize: 13, letterSpacing: 0.5 },
-  scroll: { paddingBottom: spacing.xxl },
+  scroll: { paddingBottom: spacing.xxl, paddingTop: spacing.sm },
+  leaf: { paddingHorizontal: spacing.sm },
   empty: { fontStyle: "italic", marginTop: spacing.xl, textAlign: "center" },
-  // News
-  newsRow: { flexDirection: "row", gap: spacing.md, paddingVertical: spacing.md },
-  sigil: { width: 34, height: 34, borderRadius: radii.sm, borderWidth: 1, alignItems: "center", justifyContent: "center", marginTop: 2, backgroundColor: "rgba(0,0,0,0.25)" },
-  newsText: { flex: 1, minWidth: 0 },
-  metaLine: { fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: "700", marginBottom: 3 },
-  headline: { lineHeight: 22 },
+
+  // News — centered manuscript entries
+  entry: { alignItems: "center", paddingVertical: spacing.md },
+  meta: { fontSize: 11, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: "700", textAlign: "center" },
+  emblem: { marginTop: spacing.sm, marginBottom: spacing.sm, alignItems: "center", justifyContent: "center" },
+  body: { textAlign: "center", paddingHorizontal: spacing.md },
+
+  // Ornament divider
+  divider: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing.sm, marginVertical: spacing.lg, alignSelf: "stretch" },
+  divRule: { flex: 1, maxWidth: 90, height: StyleSheet.hairlineWidth, opacity: 0.7 },
+  divDiamond: { width: 5, height: 5, transform: [{ rotate: "45deg" }], opacity: 0.85 },
+
   // Timeline
   yearBlock: { marginBottom: spacing.lg },
-  year: { fontSize: 22, fontWeight: "800", letterSpacing: 1, marginBottom: spacing.sm },
-  rail: { borderLeftWidth: StyleSheet.hairlineWidth, paddingLeft: spacing.lg, marginLeft: spacing.sm },
-  railRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm, paddingVertical: spacing.sm },
-  node: { width: 9, height: 9, borderRadius: 5, borderWidth: 2, marginTop: 5, marginLeft: -(spacing.lg + 4) },
-  railHeadline: { flex: 1, lineHeight: 21, fontFamily: fontFamily.display },
+  year: { fontSize: 24, fontWeight: "800", letterSpacing: 1, marginBottom: spacing.md, textAlign: "center" },
+  railRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  node: { width: 6, height: 6, borderRadius: 3, marginTop: 9 },
+  railHeadline: { flex: 1, lineHeight: 23, fontSize: 15 },
 });

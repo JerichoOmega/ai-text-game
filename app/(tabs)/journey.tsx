@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useWorldStore } from "@/state/useWorldStore";
 import { ScreenContainer } from "@/presentation/components/ScreenContainer";
+import { JournalTriggerButton } from "@/presentation/components/JournalTriggerButton";
 import { LocationBanner } from "@/presentation/components/journey/LocationBanner";
 import { getLocationArtwork } from "@/presentation/components/journey/locationArtwork";
 import { CurrentJourney } from "@/presentation/components/journey/CurrentJourney";
@@ -30,9 +31,9 @@ const WEATHER: Record<string, { label: string; icon: keyof typeof Ionicons.glyph
 };
 
 function worldStateLabel(stability: number): { label: string; warning: boolean } {
-  if (stability >= 60) return { label: "The realm is stable", warning: false };
-  if (stability >= 30) return { label: "The realm is uneasy", warning: false };
-  return { label: "The realm is in unrest", warning: true };
+  if (stability >= 60) return { label: "Realm stable", warning: false };
+  if (stability >= 30) return { label: "Realm uneasy", warning: false };
+  return { label: "Realm in unrest", warning: true };
 }
 
 export default function JourneyScreen() {
@@ -40,6 +41,8 @@ export default function JourneyScreen() {
   const { world, manager, loading, advanceTime } = useWorldStore();
   const { width } = useWindowDimensions();
   const wide = width >= 1024;
+  const contentWidth = wide ? 720 : width;
+  const imageWidth = Math.max(320, contentWidth - spacing.lg * 2);
 
   const npcsHere = useMemo(() => {
     if (!world || !manager) return [];
@@ -53,9 +56,9 @@ export default function JourneyScreen() {
     return world.history
       .map((e, index) => ({ e, index }))
       .sort((a, b) => b.e.year - a.e.year || b.index - a.index)
-      .slice(0, wide ? 3 : 2)
+      .slice(0, 2)
       .map(({ e }) => ({ id: e.id, headline: e.headline, category: e.category, year: e.year }));
-  }, [world, wide]);
+  }, [world]);
 
   const activeQuest = useMemo(() => {
     if (!world) return undefined;
@@ -89,8 +92,6 @@ export default function JourneyScreen() {
   const onJourneyAction = () => {
     if (activeQuest) {
       const a = resolveQuestAffordance(activeQuest, world);
-      // "Speak with X" opens that NPC directly when they're here; every other
-      // affordance (travel / deliver / combat / review) lives on the quest screen.
       if (a.kind === "talk" && a.npcHere) {
         router.push(routes.npc(a.npcId));
         return;
@@ -99,52 +100,48 @@ export default function JourneyScreen() {
     router.push(routes.quests);
   };
 
-  const currentJourney = activeQuest ? (
-    <CurrentJourney
-      title={activeQuest.title}
-      summary={activeQuest.contextSummary}
-      objectives={activeQuest.objectives.map((o) => ({ id: o.id, label: o.label, complete: o.complete }))}
-      actionLabel={actionLabel}
-      onPress={onJourneyAction}
-    />
-  ) : null;
-
-  const people = <PeopleSection npcs={npcsHere} onSelect={(id) => router.push(routes.npc(id))} limit={wide ? 6 : 4} />;
-  const events = <RecentEvents events={recentEvents} onViewAll={() => router.push(routes.chronicle)} />;
-
   return (
     <ScreenContainer>
+      <View style={styles.topRow}>
+        <JournalTriggerButton />
+      </View>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <LocationBanner
-          locationName={currentSettlement?.name ?? "The Wilds"}
-          dateLabel={`${capitalize(world.currentDate.season)} · Day ${world.currentDate.day} · Year ${world.currentDate.year}`}
-          weatherLabel={weather.label}
-          weatherIcon={weather.icon}
-          statusLabel={status.label}
-          statusWarning={status.warning}
-          height={wide ? 300 : 190}
-          imageWidth={Math.max(320, width - spacing.lg * 2)}
-          artworkSource={getLocationArtwork(currentSettlement)}
-        />
+        <View style={[styles.page, { maxWidth: contentWidth }]}>
+          <LocationBanner
+            locationName={currentSettlement?.name ?? "The Wilds"}
+            dateLabel={`${capitalize(world.currentDate.season)} · Day ${world.currentDate.day} · Year ${world.currentDate.year}`}
+            weatherLabel={weather.label}
+            weatherIcon={weather.icon}
+            statusLabel={status.label}
+            statusWarning={status.warning}
+            height={wide ? 300 : 240}
+            imageWidth={imageWidth}
+            artworkSource={getLocationArtwork(currentSettlement)}
+          />
 
-        {wide ? (
-          <View style={styles.columns}>
-            <View style={styles.primaryCol}>
-              {currentJourney}
-              <View style={styles.blockGap}>{events}</View>
+          {activeQuest ? (
+            <View style={styles.chapterGap}>
+              <CurrentJourney
+                title={activeQuest.title}
+                summary={activeQuest.contextSummary}
+                objectives={activeQuest.objectives.map((o) => ({ id: o.id, label: o.label, complete: o.complete }))}
+                actionLabel={actionLabel}
+                onPress={onJourneyAction}
+              />
             </View>
-            <View style={styles.secondaryCol}>{people}</View>
-          </View>
-        ) : (
-          <>
-            {currentJourney ? <View style={styles.blockGap}>{currentJourney}</View> : null}
-            <View style={styles.blockGap}>{people}</View>
-            <View style={styles.blockGap}>{events}</View>
-          </>
-        )}
+          ) : null}
 
-        <View style={styles.blockGap}>
-          <AdvanceDayButton onPress={() => advanceTime(1)} />
+          <View style={styles.peopleGap}>
+            <PeopleSection npcs={npcsHere} onSelect={(id) => router.push(routes.npc(id))} limit={wide ? 8 : 6} />
+          </View>
+
+          <View style={styles.eventsGap}>
+            <RecentEvents events={recentEvents} onViewAll={() => router.push(routes.chronicle)} />
+          </View>
+
+          <View style={styles.advanceGap}>
+            <AdvanceDayButton onPress={() => advanceTime(1)} />
+          </View>
         </View>
       </ScrollView>
     </ScreenContainer>
@@ -152,9 +149,11 @@ export default function JourneyScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.lg },
-  blockGap: { marginTop: spacing.xl },
-  columns: { flexDirection: "row", gap: spacing.xl, marginTop: spacing.xl },
-  primaryCol: { flex: 2, minWidth: 0 },
-  secondaryCol: { flex: 1, minWidth: 0 },
+  topRow: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingTop: spacing.sm, paddingBottom: spacing.xs },
+  scroll: { paddingBottom: spacing.xl, alignItems: "center" },
+  page: { width: "100%", alignSelf: "center" },
+  chapterGap: { marginTop: spacing.xl },
+  peopleGap: { marginTop: spacing.xl },
+  eventsGap: { marginTop: spacing.xl },
+  advanceGap: { marginTop: spacing.xxl },
 });
