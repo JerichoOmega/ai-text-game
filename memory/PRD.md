@@ -24,6 +24,13 @@ Living-fantasy-storybook title screen; no gameplay/systems/persistence changes.
 
 Verification (automated): typecheck 0 · tests 89/89 · `expo export --platform web` clean bundle. NOT verified: on-device/simulator visual (web can't RUN — `expo-sqlite` is native-only, pre-existing limitation).
 
+### 2026-06-14 — Wordmark art + visual QA
+- Illuminated compass rose: replaced the plain Ionicons compass in the CHRONICLE "O" with a hand-painted gold illuminated compass-rose medallion (`assets/images/compass-rose.png`), shown in a circular brass-ringed medallion inlaid into the wordmark.
+- Atmosphere polish: switched the drifting cloud/mist layers from horizontal to vertically-feathered gradients (removes visible band seams); softened + repositioned the sunset glow.
+- Web-only SQLite shim: added `src/data/sqlite.web.ts` + `metro.config.js` web alias so the app can render in a browser for preview/QA. **iOS/Android use the real native expo-sqlite unchanged** — gameplay persistence is not affected. Safe to delete if web preview isn't wanted.
+- Visual QA via browser render (not a real device): captured both title states — no-save shows START ADVENTURE; saved shows CONTINUE ADVENTURE + Start New Adventure. Confirmed compass medallion, soft drifting haze (no seams), and bird flocks render correctly.
+- Still NOT verified on a real iPhone/simulator (no iOS toolchain in this environment).
+
 ## Backlog (future roadmap — NOT started)
 P1: wire `talk_to_npc`/`deliver_item` objective triggers (complete deterministic RPG loop w/o AI). Then player-consequence events; enemy variety; seeded RNG; quest chains + content depth.
 Later (design only): conversational NPCs → NL player actions → deterministic action resolution → emergent interactions/quest chains → living world → content/polish/MVP. AI stays interpreter/narrator, never authority.
